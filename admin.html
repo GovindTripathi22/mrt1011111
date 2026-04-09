@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MRT Admin | Management Console</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=Noto+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#003366',
+                        secondary: '#ff8c00',
+                        surface: '#f8fafc',
+                    },
+                    fontFamily: {
+                        sans: ['Manrope', 'sans-serif'],
+                        serif: ['Noto Serif', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .sidebar-link.active {
+            background: #f1f5f9;
+            color: #003366;
+            font-weight: 700;
+            border-right: 4px solid #003366;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans h-screen overflow-hidden flex">
+
+    <!-- Auth Guard Overlay (Hidden if logged in) -->
+    <div id="login-overlay" class="fixed inset-0 z-[100] bg-white flex items-center justify-center">
+        <div class="max-w-md w-full p-10 bg-white rounded-[2.5rem] shadow-2xl border border-gray-100 text-center">
+            <div class="mb-8 flex justify-center" id="admin-logo-login"></div>
+            <h2 class="text-3xl font-serif italic text-primary mb-2">Management Access</h2>
+            <p class="text-gray-500 mb-8 text-sm uppercase tracking-[0.2em] font-bold">Authorized Personnel Only</p>
+            <form id="login-form" class="space-y-4">
+                <div class="text-left">
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Username</label>
+                    <input type="text" id="username" name="username" class="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all" required>
+                </div>
+                <div class="text-left">
+                    <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Password</label>
+                    <input type="password" id="password" name="password" class="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all" required>
+                </div>
+                <button type="submit" class="w-full bg-primary text-white py-5 rounded-2xl font-bold uppercase tracking-[0.2em] text-xs hover:scale-[1.02] active:scale-95 transition-all shadow-xl shadow-primary/20">Sign In to Dashboard</button>
+                <p id="login-error" class="text-red-500 text-xs mt-4 font-bold hidden">Invalid credentials. Access denied.</p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="w-72 bg-white border-r border-gray-200 flex flex-col h-full z-40">
+        <div class="p-8 border-b border-gray-100">
+            <div id="admin-logo-sidebar"></div>
+        </div>
+        <nav class="flex-grow p-4 space-y-2 overflow-y-auto hide-scrollbar">
+            <button data-tab="dashboard" class="sidebar-link active w-full flex items-center space-x-4 px-6 py-4 rounded-2xl text-gray-500 hover:bg-gray-50 transition-all group">
+                <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">dashboard</span>
+                <span class="text-sm tracking-tight">Overview</span>
+            </button>
+            <button data-tab="categories" class="sidebar-link w-full flex items-center space-x-4 px-6 py-4 rounded-2xl text-gray-500 hover:bg-gray-50 transition-all group">
+                <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">category</span>
+                <span class="text-sm tracking-tight">Collections</span>
+            </button>
+            <button data-tab="products" class="sidebar-link w-full flex items-center space-x-4 px-6 py-4 rounded-2xl text-gray-500 hover:bg-gray-50 transition-all group">
+                <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">inventory_2</span>
+                <span class="text-sm tracking-tight">Products</span>
+            </button>
+            <button data-tab="testimonials" class="sidebar-link w-full flex items-center space-x-4 px-6 py-4 rounded-2xl text-gray-500 hover:bg-gray-50 transition-all group">
+                <span class="material-symbols-outlined text-xl group-hover:scale-110 transition-transform">reviews</span>
+                <span class="text-sm tracking-tight">Testimonials</span>
+            </button>
+        </nav>
+        <div class="p-6 border-t border-gray-100">
+            <button id="logout-btn" class="w-full flex items-center justify-center space-x-3 px-6 py-4 rounded-2xl bg-gray-50 text-red-500 hover:bg-red-50 transition-all font-bold text-xs uppercase tracking-widest">
+                <span class="material-symbols-outlined text-lg">logout</span>
+                <span>Sign Out</span>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-grow flex flex-col h-full bg-gray-50 overflow-hidden">
+        <!-- Header -->
+        <header class="h-20 bg-white/80 backdrop-blur-md border-b border-gray-200 flex items-center justify-between px-10 flex-shrink-0">
+            <h1 id="tab-title" class="text-2xl font-serif italic text-primary">Dashboard Overview</h1>
+            <div class="flex items-center space-x-6">
+                <div class="flex flex-col text-right">
+                    <span class="text-sm font-bold text-gray-800" id="admin-name-display">Administrator</span>
+                    <span class="text-[10px] uppercase font-bold text-secondary tracking-widest">Global Sourcing</span>
+                </div>
+                <div class="w-10 h-10 rounded-full bg-secondary/10 flex items-center justify-center text-secondary font-bold">A</div>
+            </div>
+        </header>
+
+        <!-- Content Area -->
+        <div class="flex-grow overflow-y-auto p-10 hide-scrollbar scroll-smooth">
+            
+            <!-- Dashboard Tab -->
+            <div id="dashboard-tab" class="tab-content active space-y-10">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8">
+                    <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-xl transition-all">
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Total Products</p>
+                            <h3 class="text-4xl font-serif italic text-primary" id="stat-products">0</h3>
+                        </div>
+                        <span class="material-symbols-outlined text-4xl text-primary/10 group-hover:text-primary transition-colors">inventory_2</span>
+                    </div>
+                    <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-xl transition-all">
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Collections</p>
+                            <h3 class="text-4xl font-serif italic text-primary" id="stat-categories">0</h3>
+                        </div>
+                        <span class="material-symbols-outlined text-4xl text-primary/10 group-hover:text-primary transition-colors">category</span>
+                    </div>
+                    <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-xl transition-all">
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Market Reach</p>
+                            <h3 class="text-4xl font-serif italic text-primary">Global</h3>
+                        </div>
+                        <span class="material-symbols-outlined text-4xl text-primary/10 group-hover:text-primary transition-colors">public</span>
+                    </div>
+                    <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 flex items-center justify-between group hover:shadow-xl transition-all">
+                        <div>
+                            <p class="text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Server Status</p>
+                            <h3 class="text-4xl font-serif italic text-green-500">Live</h3>
+                        </div>
+                        <span class="material-symbols-outlined text-4xl text-green-500/10 group-hover:text-green-500 transition-colors">check_circle</span>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-10">
+                    <h4 class="text-xl font-serif italic text-primary mb-8 border-b border-gray-50 pb-6 uppercase tracking-wider">Site Activity</h4>
+                    <div class="h-64 flex items-center justify-center bg-gray-50 rounded-[2rem] opacity-30 italic font-serif">
+                        Detailed analytics connection pending...
+                    </div>
+                </div>
+            </div>
+
+            <!-- Categories Tab -->
+            <div id="categories-tab" class="tab-content space-y-8">
+                <div class="flex justify-between items-end">
+                    <p class="text-on-surface-variant italic font-serif opacity-60">Organize your global sourcing into logical collections.</p>
+                    <button class="bg-primary text-white px-8 py-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-primary/10 hover:scale-105 transition-all flex items-center space-x-2 open-category-modal">
+                        <span class="material-symbols-outlined text-sm">add</span>
+                        <span>New Collection</span>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" id="categories-list">
+                    <!-- Categories will be injected here -->
+                </div>
+            </div>
+
+            <!-- Products Tab -->
+            <div id="products-tab" class="tab-content space-y-8">
+                <div class="flex justify-between items-end bg-white p-8 rounded-[2.5rem] shadow-sm border border-gray-100">
+                    <div class="flex-grow max-w-xl">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Search Inventory</label>
+                        <div class="flex space-x-4">
+                            <input type="text" id="search-products" placeholder="Search by name, category or price..." class="flex-grow bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all">
+                            <select id="filter-category" class="bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-bold uppercase tracking-widest text-gray-500">
+                                <option value="">All Collections</option>
+                            </select>
+                        </div>
+                    </div>
+                    <button class="bg-primary text-white px-10 py-5 rounded-2xl font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-primary/10 hover:scale-105 transition-all flex items-center space-x-2 open-product-modal">
+                        <span class="material-symbols-outlined text-sm">add</span>
+                        <span>Add Product</span>
+                    </button>
+                </div>
+
+                <div class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 overflow-hidden">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 border-b border-gray-100">
+                            <tr>
+                                <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-gray-400">Product Detail</th>
+                                <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-gray-400">Inventory Status</th>
+                                <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-gray-400">Price</th>
+                                <th class="px-8 py-5 text-[10px] font-bold uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="products-list" class="divide-y divide-gray-50">
+                            <!-- Products will be injected here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Testimonials Tab -->
+            <div id="testimonials-tab" class="tab-content space-y-8">
+                <div class="flex justify-between items-end">
+                    <p class="text-on-surface-variant italic font-serif opacity-60">Global customer feedback from USA & UAE regions.</p>
+                    <button class="bg-primary text-white px-8 py-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] shadow-lg shadow-primary/10 hover:scale-105 transition-all flex items-center space-x-2 open-testimonial-modal">
+                        <span class="material-symbols-outlined text-sm">add</span>
+                        <span>New Testimonial</span>
+                    </button>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-10" id="testimonials-list">
+                    <!-- Testimonials will be injected here -->
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Category Modal -->
+    <div id="category-modal" class="fixed inset-0 z-50 bg-primary/20 backdrop-blur-sm flex items-center justify-center p-6 hidden">
+        <div class="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl p-10 animate-fade-in border border-gray-100 max-h-[90vh] overflow-y-auto hide-scrollbar">
+            <div class="flex justify-between items-center mb-10 border-b border-gray-50 pb-6">
+                <h3 class="text-3xl font-serif italic text-primary" id="category-modal-title">New Collection</h3>
+                <button class="close-modal bg-gray-50 p-2 rounded-full hover:bg-gray-100 transition-all"><span class="material-symbols-outlined text-gray-400">close</span></button>
+            </div>
+            <form id="category-form" class="space-y-6">
+                <input type="hidden" name="id">
+                <div class="grid grid-cols-2 gap-6">
+                    <div class="col-span-2">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Collection Name</label>
+                        <input type="text" name="name" class="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all" required>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Slug (URL Part)</label>
+                        <input type="text" name="slug" class="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all" required>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Icon Name (Material)</label>
+                        <input type="text" name="icon" class="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all">
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Collection Image (Cover)</label>
+                        <div class="flex items-center space-x-6">
+                            <div class="w-24 h-24 rounded-3xl bg-gray-50 flex items-center justify-center overflow-hidden border border-gray-100">
+                                <img id="category-image-preview" src="/assets/categories/placeholder.png" class="w-full h-full object-cover">
+                            </div>
+                            <div class="flex-grow">
+                                <input type="file" id="category-image-input" accept="image/*" class="hidden">
+                                <label for="category-image-input" class="bg-secondary/10 text-secondary px-8 py-4 rounded-2xl font-bold uppercase tracking-widest text-[10px] cursor-pointer inline-block hover:bg-secondary/20 transition-all">Upload Asset</label>
+                                <input type="hidden" name="image">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-6 border-t border-gray-50 flex space-x-4">
+                    <button type="submit" class="flex-grow bg-primary text-white py-5 rounded-2xl font-bold uppercase tracking-[0.2em] text-xs shadow-xl shadow-primary/20">Save Collection</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Product Modal -->
+    <div id="product-modal" class="fixed inset-0 z-50 bg-primary/20 backdrop-blur-sm flex items-center justify-center p-6 hidden">
+        <div class="bg-white w-full max-w-4xl rounded-[3rem] shadow-2xl p-10 animate-fade-in border border-gray-100 max-h-[95vh] overflow-y-auto hide-scrollbar">
+            <div class="flex justify-between items-center mb-10 border-b border-gray-50 pb-6">
+                <h3 class="text-3xl font-serif italic text-primary" id="product-modal-title">Add Global Sourcing</h3>
+                <button class="close-modal bg-gray-50 p-2 rounded-full hover:bg-gray-100 transition-all"><span class="material-symbols-outlined text-gray-400">close</span></button>
+            </div>
+            <form id="product-form" class="space-y-8">
+                <input type="hidden" name="id">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-10">
+                    <!-- Left: Images and Status -->
+                    <div class="space-y-8">
+                        <div>
+                            <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-4 ml-1">Product Visual</label>
+                            <div class="w-full aspect-square rounded-[2rem] bg-gray-50 border border-gray-100 flex items-center justify-center mb-4 overflow-hidden">
+                                <img id="product-image-preview" src="/assets/products/placeholder.png" class="w-full h-full object-contain mix-blend-multiply">
+                            </div>
+                            <input type="file" id="product-image-input" accept="image/*" class="hidden">
+                            <label for="product-image-input" class="w-full text-center bg-secondary/10 text-secondary py-4 rounded-xl font-bold uppercase tracking-widest text-[10px] cursor-pointer inline-block hover:bg-secondary/20 transition-all">Replace Media</label>
+                            <input type="hidden" name="image">
+                        </div>
+                        <div class="bg-gray-50 p-6 rounded-[2rem] space-y-4">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs font-bold text-gray-500">Recommended</span>
+                                <label class="relative inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" name="isFeatured" class="sr-only peer">
+                                    <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+                                </label>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2">Display Badge</label>
+                                <select name="badge" class="w-full bg-white border border-gray-100 px-4 py-3 rounded-xl text-xs font-bold">
+                                    <option value="Top Pick">⭐ Top Pick</option>
+                                    <option value="Trending Now">📈 Trending Now</option>
+                                    <option value="Editor's Choice">💎 Editor's Choice</option>
+                                    <option value="Best Seller">🔥 Best Seller</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right: Info -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <div class="grid grid-cols-2 gap-6">
+                            <div class="col-span-2">
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Product Identity</label>
+                                <input type="text" name="name" placeholder="Full product name..." class="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all" required>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Target Collection</label>
+                                <select name="categoryId" class="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-bold" required>
+                                    <!-- Dynamic -->
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Unit Price ($)</label>
+                                <input type="number" step="0.01" name="price" class="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all font-bold" required>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Boutique Short Description</label>
+                                <textarea name="shortBenefit" rows="2" class="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all" placeholder="Key hook for the product card..."></textarea>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Key Technical Benefits (JSON Array)</label>
+                                <textarea name="keyBenefits" rows="3" class="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all font-mono text-xs" placeholder='["Feature 1", "Feature 2", "Feature 3"]'></textarea>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Partner Affiliate Link</label>
+                                <div class="flex">
+                                    <span class="bg-gray-100 px-4 flex items-center rounded-l-2xl border-y border-l border-gray-100 text-gray-400"><span class="material-symbols-outlined text-sm">link</span></span>
+                                    <input type="url" name="affiliateLink" class="flex-grow bg-gray-50 border border-gray-100 px-6 py-4 rounded-r-2xl focus:ring-2 focus:ring-primary outline-none transition-all">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="pt-8 border-t border-gray-50 flex space-x-4">
+                    <button type="button" class="close-modal px-10 py-5 rounded-2xl font-bold uppercase tracking-widest text-[10px] text-gray-400 hover:bg-gray-50 transition-all">Cancel</button>
+                    <button type="submit" class="flex-grow bg-primary text-white py-5 rounded-2xl font-bold uppercase tracking-[0.2em] text-xs shadow-xl shadow-primary/20">Record Global Sourcing</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Testimonial Modal -->
+    <div id="testimonial-modal" class="fixed inset-0 z-50 bg-primary/20 backdrop-blur-sm flex items-center justify-center p-6 hidden">
+        <div class="bg-white w-full max-w-xl rounded-[3rem] shadow-2xl p-10 animate-fade-in border border-gray-100 max-h-[90vh] overflow-y-auto hide-scrollbar">
+            <div class="flex justify-between items-center mb-10 border-b border-gray-50 pb-6">
+                <h3 class="text-3xl font-serif italic text-primary" id="testimonial-modal-title">New Testimonial</h3>
+                <button class="close-modal bg-gray-50 p-2 rounded-full hover:bg-gray-100 transition-all"><span class="material-symbols-outlined text-gray-400">close</span></button>
+            </div>
+            <form id="testimonial-form" class="space-y-6">
+                <input type="hidden" name="id">
+                <div class="grid grid-cols-2 gap-6">
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Customer Name</label>
+                        <input type="text" name="name" class="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all" required>
+                    </div>
+                    <div>
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Location</label>
+                        <input type="text" name="location" class="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all" required>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Headline Quote</label>
+                        <input type="text" name="quote" class="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all" required>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Full Review Text</label>
+                        <textarea name="text" rows="3" class="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all" required></textarea>
+                    </div>
+                    <div class="col-span-2">
+                        <label class="block text-[10px] font-bold uppercase tracking-widest text-gray-400 mb-2 ml-1">Region</label>
+                        <select name="region" class="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl focus:ring-2 focus:ring-primary outline-none transition-all text-sm font-bold" required>
+                            <option value="us">🇺🇸 United States</option>
+                            <option value="ae">🇦🇪 UAE</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="pt-6 border-t border-gray-50 flex space-x-4">
+                    <button type="button" class="close-modal px-10 py-5 rounded-2xl font-bold uppercase tracking-widest text-[10px] text-gray-400 hover:bg-gray-50 transition-all">Cancel</button>
+                    <button type="submit" class="flex-grow bg-primary text-white py-5 rounded-2xl font-bold uppercase tracking-[0.2em] text-xs shadow-xl shadow-primary/20">Save Testimonial</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed bottom-10 right-10 z-[110] translate-y-20 opacity-0 transition-all duration-500">
+        <div class="bg-primary text-white px-8 py-5 rounded-[2rem] shadow-2xl flex items-center space-x-4">
+            <span id="toast-icon" class="material-symbols-outlined">check_circle</span>
+            <span id="toast-message" class="text-sm font-bold tracking-tight">Operation successful</span>
+        </div>
+    </div>
+
+    <script type="module" src="/src/admin.js"></script>
+</body>
+</html>

@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Categories | MRT International Holding LLC</title>
+    
+    <!-- Typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <!-- Scripts & Styles -->
+    <link rel="stylesheet" href="/src/style.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/studio-freight/lenis@1.0.19/bundled/lenis.min.js"></script>
+    <script type="module" src="/src/main.js"></script>
+    <style>body { opacity: 0; transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1); } body.loaded { opacity: 1; }</style>
+</head>
+<body class="bg-surface text-on-surface">
+    <!-- TopNavBar -->
+    <header class="fixed top-0 w-full z-50 glass-nav border-b border-outline-variant/10">
+        <div class="flex justify-between items-center px-8 py-4 max-w-screen-2xl mx-auto">
+            <div class="flex items-center">
+                <a href="index.html" data-logo class="flex items-center h-10 md:h-12"></a>
+            </div>
+            
+            <nav class="hidden md:flex items-center space-x-8">
+                <a href="index.html" class="text-on-surface-variant font-medium hover:text-primary transition-colors serif italic text-lg tracking-tight">Home</a>
+                <a href="about.html" class="text-on-surface-variant font-medium hover:text-primary transition-colors serif italic text-lg tracking-tight">About</a>
+                <a href="categories.html" class="text-on-surface border-b-2 border-primary font-medium pb-1 serif italic text-lg tracking-tight">Categories</a>
+                <a href="contact.html" class="text-on-surface-variant font-medium hover:text-primary transition-colors serif italic text-lg tracking-tight">Contact</a>
+            </nav>
+
+            <div class="flex items-center space-x-6">
+                <a href="contact.html" class="bg-primary text-on-primary px-6 py-2 rounded-xl text-sm font-bold uppercase tracking-widest hover:scale-105 transition-all shadow-xl">Contact Us</a>
+            </div>
+        </div>
+    </header>
+
+    <main class="pt-20">
+        <!-- Hero Section -->
+        <section class="relative py-24 bg-surface-container-low overflow-hidden">
+            <div class="container mx-auto px-8 text-center relative z-10">
+                <div class="max-w-4xl mx-auto">
+                    <span class="text-primary font-bold tracking-[0.4em] uppercase text-xs mb-8 block">The Boutique Collections</span>
+                    <h1 class="text-7xl font-headline text-on-surface leading-tight mb-10 italic">Our Boutique <i>Pillars</i></h1>
+                    <p class="text-2xl text-on-surface-variant font-body leading-relaxed max-w-2xl mx-auto italic">Meticulously curated sourcing across 7 core domains, delivering global excellence to your doorstep.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Categories Grid -->
+        <section class="py-24 bg-surface">
+            <div class="container mx-auto px-8 max-w-screen-2xl">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+                    <!-- 1. Home & Kitchen -->
+                    <div class="group relative rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 h-[500px] border border-outline-variant/10">
+                        <img src="/assets/categories/home-kitchen.png" alt="Home & Kitchen" class="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-12">
+                            <h3 class="text-4xl text-white font-headline mb-4 italic">Home & Kitchen</h3>
+                            <p class="text-white/70 text-lg mb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500">Elevate your living spaces with curated culinary tools and lifestyle essentials.</p>
+                            <a href="category.html?c=home-kitchen" class="inline-flex items-center text-primary-container font-bold uppercase tracking-widest text-xs">Explore Items <span class="material-symbols-outlined ml-2">arrow_forward</span></a>
+                        </div>
+                    </div>
+
+                    <!-- 2. Health & Personal Care -->
+                    <div class="group relative rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 h-[500px] border border-outline-variant/10">
+                        <img src="/assets/categories/health-wellness.png" alt="Health & Care" class="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-12">
+                            <h3 class="text-4xl text-white font-headline mb-4 italic">Health & Care</h3>
+                            <p class="text-white/70 text-lg mb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500">Modern wellness solutions designed for vitality and refined personal standards.</p>
+                            <a href="category.html?c=health-wellness" class="inline-flex items-center text-primary-container font-bold uppercase tracking-widest text-xs">Explore Items <span class="material-symbols-outlined ml-2">arrow_forward</span></a>
+                        </div>
+                    </div>
+
+                    <!-- 3. Beauty & Skincare -->
+                    <div class="group relative rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 h-[500px] border border-outline-variant/10">
+                        <img src="/assets/categories/beauty-skincare.png" alt="Beauty & Skincare" class="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-12">
+                            <h3 class="text-4xl text-white font-headline mb-4 italic">Beauty & Skincare</h3>
+                            <p class="text-white/70 text-lg mb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500">Pristine formulas and artisanal tools for a radiant, global aesthetic.</p>
+                            <a href="category.html?c=beauty-personal-care" class="inline-flex items-center text-primary-container font-bold uppercase tracking-widest text-xs">Explore Items <span class="material-symbols-outlined ml-2">arrow_forward</span></a>
+                        </div>
+                    </div>
+
+                    <!-- 4. Pet Supplies -->
+                    <div class="group relative rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 h-[500px] border border-outline-variant/10">
+                        <img src="/assets/categories/pet-supplies.png" alt="Pet Supplies" class="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-12">
+                            <h3 class="text-4xl text-white font-headline mb-4 italic">Pet Supplies</h3>
+                            <p class="text-white/70 text-lg mb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500">Sophisticated gear and essentials for your most loyal companions.</p>
+                            <a href="category.html?c=pet-supplies" class="inline-flex items-center text-primary-container font-bold uppercase tracking-widest text-xs">Explore Items <span class="material-symbols-outlined ml-2">arrow_forward</span></a>
+                        </div>
+                    </div>
+
+                    <!-- 5. Baby Products -->
+                    <div class="group relative rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 h-[500px] border border-outline-variant/10">
+                        <img src="/assets/categories/baby-products.png" alt="Baby Products" class="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-12">
+                            <h3 class="text-4xl text-white font-headline mb-4 italic">Baby Products</h3>
+                            <p class="text-white/70 text-lg mb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500">Nordic-inspired design and safety-first essentials for the next generation.</p>
+                            <a href="category.html?c=baby-kids-essentials" class="inline-flex items-center text-primary-container font-bold uppercase tracking-widest text-xs">Explore Items <span class="material-symbols-outlined ml-2">arrow_forward</span></a>
+                        </div>
+                    </div>
+
+                    <!-- 6. Electronics Accessories -->
+                    <div class="group relative rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 h-[500px] border border-outline-variant/10">
+                        <img src="/assets/categories/electronics.png" alt="Electronics" class="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-110">
+                        <div class="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-12">
+                            <h3 class="text-4xl text-white font-headline mb-4 italic">Electronics</h3>
+                            <p class="text-white/70 text-lg mb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500">Sharp, high-performance tech companions for a seamless digital life.</p>
+                            <a href="category.html?c=electronics-accessories" class="inline-flex items-center text-primary-container font-bold uppercase tracking-widest text-xs">Explore Items <span class="material-symbols-outlined ml-2">arrow_forward</span></a>
+                        </div>
+                    </div>
+
+                    <!-- 7. Sports & Fitness -->
+                    <div class="group relative lg:col-span-3 rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 h-[400px] border border-outline-variant/10">
+                        <img src="/assets/categories/sports-fitness.png" alt="Sports & Fitness" class="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-105">
+                        <div class="absolute inset-0 bg-gradient-to-r from-black/90 via-black/40 to-transparent flex flex-col justify-center p-20">
+                            <h3 class="text-5xl text-white font-headline mb-6 italic">Sports & Fitness</h3>
+                            <p class="text-white/70 text-xl mb-10 max-w-xl">Achieve your peak with minimalist gear curated for performance, reliability, and precision training.</p>
+                            <div>
+                                <a href="category.html?c=sports-fitness" class="inline-flex items-center bg-primary text-on-primary px-10 py-4 rounded-2xl font-bold uppercase tracking-widest text-xs hover:scale-105 transition-all">Explore Peak Gear <span class="material-symbols-outlined ml-3">fitness_center</span></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="py-32 px-8 mb-24 bg-primary-container/10">
+            <div class="max-w-screen-xl mx-auto text-center">
+                <h2 class="text-6xl font-headline italic mb-10 text-primary">Can't Find Your Excellence?</h2>
+                <p class="text-2xl text-on-surface-variant font-body mb-12 max-w-2xl mx-auto italic opacity-80">Our global sourcing network is constantly expanding. Partner with MRT to access premium goods at competitive pricing.</p>
+                <button class="bg-primary text-on-primary px-12 py-5 rounded-2xl font-bold uppercase tracking-[0.2em] text-sm hover:scale-110 transition-all shadow-2xl">Contact Sourcing Team</button>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer id="contact" class="w-full rounded-t-[5rem] mt-20 bg-surface-container-high border-t border-outline-variant/10 text-on-surface">
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-16 px-16 py-24 max-w-screen-2xl mx-auto">
+            <div class="flex flex-col">
+                <a href="index.html" data-logo class="flex items-center h-10 md:h-12 mb-8"></a>
+                <p class="text-on-surface-variant text-base font-body leading-relaxed opacity-70 italic">Delivering global sourcing excellence, quality reliability, and market-leading value to customers across the globe.</p>
+            </div>
+            
+            <div>
+                <h4 class="text-sm tracking-[0.3em] uppercase text-primary font-bold mb-8">Boutique Pillars</h4>
+                <ul class="space-y-4">
+                    <li><a href="categories.html" class="text-on-surface-variant hover:text-primary transition-colors text-base opacity-90 italic">Home & Kitchen</a></li>
+                    <li><a href="categories.html" class="text-on-surface-variant hover:text-primary transition-colors text-base opacity-90 italic">Health & Wellness</a></li>
+                    <li><a href="categories.html" class="text-on-surface-variant hover:text-primary transition-colors text-base opacity-90 italic">Essential Selection</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="text-sm tracking-[0.3em] uppercase text-primary font-bold mb-8">Corporate</h4>
+                <ul class="space-y-4">
+                    <li><a href="about.html" class="text-on-surface-variant hover:text-primary transition-all text-base opacity-90 italic">Our Story</a></li>
+                    <li><a href="about.html" class="text-on-surface-variant hover:text-primary transition-all text-base opacity-90 italic">Strategic Vision</a></li>
+                    <li><a href="about.html" class="text-on-surface-variant hover:text-primary transition-all text-base opacity-90 italic">Why MRT?</a></li>
+                </ul>
+            </div>
+
+            <div>
+                <h4 class="text-sm tracking-[0.3em] uppercase text-primary font-bold mb-8">Get In Touch</h4>
+                <ul class="space-y-4">
+                    <li class="flex items-center space-x-3 text-on-surface-variant opacity-70 italic">
+                        <span class="material-symbols-outlined text-sm text-primary">location_on</span>
+                        <span>Wyoming, USA</span>
+                    </li>
+                    <li class="flex items-center space-x-3 text-on-surface-variant opacity-70 italic">
+                        <span class="material-symbols-outlined text-sm text-primary">mail</span>
+                        <a href="mailto:Info@mrtinternationalholding.com" class="hover:text-primary transition-colors">Info@mrtinternationalholding.com</a>
+                    </li>
+                    <li class="flex items-center space-x-3 text-on-surface-variant opacity-70 italic">
+                        <span class="material-symbols-outlined text-sm text-primary">call</span>
+                        <a href="tel:+19044594398" class="hover:text-primary transition-colors">+1 904 459 4398</a>
+                    </li>
+                    <li class="flex items-center space-x-3 pt-4">
+                        <a href="https://wa.me/19044594398" class="bg-primary/10 p-2 rounded-lg text-primary hover:bg-primary hover:text-white transition-all duration-300" aria-label="WhatsApp">
+                            <span class="material-symbols-outlined">add_call</span>
+                        </a>
+                        <a href="#" class="bg-primary/10 p-2 rounded-lg text-primary hover:bg-primary hover:text-white transition-all duration-300" aria-label="Facebook">
+                            <span class="material-symbols-outlined">facebook</span>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="px-16 py-12 border-t border-outline-variant/10 text-center">
+            <p class="text-on-surface-variant font-body text-xs tracking-[0.4em] uppercase opacity-40">© 2024 MRT International Holding LLC. All Rights Reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,45 @@
+{
+  "name": "ecommerce",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "client": "vite",
+    "server": "node server/index.js",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "NODE_ENV=production node server/index.js",
+    "deploy": "git pull origin main && npm install && npm run build && pm2 restart ecosystem.config.js",
+    "prisma:seed": "node server/seed.js"
+  },
+  "prisma": {
+    "seed": "node server/seed.js"
+  },
+  "devDependencies": {
+    "autoprefixer": "^10.4.27",
+    "postcss": "^8.5.8",
+    "prisma": "^6.2.1",
+    "tailwindcss": "^3.4.19",
+    "vite": "^8.0.1"
+  },
+  "dependencies": {
+    "@prisma/client": "^6.2.1",
+    "@studio-freight/lenis": "^1.0.42",
+    "bcryptjs": "^3.0.3",
+    "better-sqlite3": "^12.8.0",
+    "concurrently": "^9.2.1",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.6",
+    "dotenv": "^16.6.1",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.3.2",
+    "gsap": "^3.11.4",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "multer": "^2.1.1",
+    "mysql2": "^3.20.0",
+    "node-cache": "^5.1.2",
+    "sharp": "^0.34.5"
+  }
+}
