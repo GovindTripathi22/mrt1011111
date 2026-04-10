@@ -333,6 +333,10 @@ class MRTApp {
           </div>
         </article>
       `;
+            </div>
+          </div>
+        </article>
+      `;
     } catch (err) {
       console.error("[MRT] Error creating product card:", err);
       return '';
