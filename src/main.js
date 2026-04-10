@@ -104,21 +104,34 @@ class MRTApp {
         });
       }
 
-      // Mobile Menu
+      // Mobile Menu - Enhanced
       const mobileBtn = document.getElementById('mobile-menu-btn');
       const mobileNav = document.getElementById('mobile-menu');
       if (mobileBtn && mobileNav) {
          mobileBtn.addEventListener('click', () => {
-             mobileNav.classList.toggle('hidden');
-             mobileNav.classList.toggle('flex');
-             mobileNav.classList.toggle('flex-col');
-             mobileNav.classList.toggle('absolute');
-             mobileNav.classList.toggle('top-16');
-             mobileNav.classList.toggle('left-0');
-             mobileNav.classList.toggle('w-full');
-             mobileNav.classList.toggle('bg-white');
-             mobileNav.classList.toggle('p-6');
-             mobileNav.classList.toggle('shadow-xl');
+             mobileNav.classList.toggle('active');
+             const icon = mobileBtn.querySelector('.material-symbols-outlined');
+             if (icon) {
+               icon.textContent = mobileNav.classList.contains('active') ? 'close' : 'menu';
+             }
+         });
+         
+         // Close menu when clicking on a link
+         mobileNav.querySelectorAll('a').forEach(link => {
+           link.addEventListener('click', () => {
+             mobileNav.classList.remove('active');
+             const icon = mobileBtn.querySelector('.material-symbols-outlined');
+             if (icon) icon.textContent = 'menu';
+           });
+         });
+         
+         // Close menu when clicking outside
+         document.addEventListener('click', (e) => {
+           if (!mobileNav.contains(e.target) && !mobileBtn.contains(e.target)) {
+             mobileNav.classList.remove('active');
+             const icon = mobileBtn.querySelector('.material-symbols-outlined');
+             if (icon) icon.textContent = 'menu';
+           }
          });
       }
 
@@ -259,71 +272,63 @@ class MRTApp {
       const image = product.image || '/assets/products/premium_product_placeholder.png';
       const price = product.price ? product.price.toFixed(2) : '39.99';
       const rating = (product.ratingValue || 4.8).toFixed(1);
+      const isCarousel = options.isCarousel || false;
       const badge = product.badge || 'Elite Selection';
       
       const benefits = product.keyBenefits ? (Array.isArray(product.keyBenefits) ? product.keyBenefits : JSON.parse(product.keyBenefits)) : ['Superior Build', 'Premium Quality', 'Global Standards'];
       const badgeIcon = badge.includes('Top') ? 'star' : (badge.includes('Trending') ? 'bolt' : 'lightbulb');
       
-      // PREMIUM GLASS BADGE
-      const badgeHtml = `<div class="absolute top-6 left-6 z-10 flex items-center gap-2.5 px-4 py-2 bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/50">
-                          <span class="material-symbols-outlined text-base text-primary fill-primary">${badgeIcon}</span>
-                          <span class="text-[11px] font-black text-gray-900 uppercase tracking-[0.2em]">${badge}</span>
+      // PREMIUM GLASS BADGE - Compact version
+      const badgeHtml = `<div class="absolute top-4 left-4 z-10 flex items-center gap-1.5 px-3 py-1 bg-white/90 backdrop-blur-xl rounded-full shadow-lg border border-white/50">
+                          <span class="material-symbols-outlined text-[10px] text-primary fill-primary">${badgeIcon}</span>
+                          <span class="text-[9px] font-black text-gray-900 uppercase tracking-widest">${badge}</span>
                         </div>`;
 
-      // SIZING LOGIC: Bigger relevant sizes
-      const cardWidth = options.variant === 'homepage' ? 'w-[320px] md:w-[420px] shrink-0' : 'w-full';
+      // SIZING LOGIC: "Compact Premium"
+      const cardClass = isCarousel ? 'flex-shrink-0 w-[280px] md:w-[320px]' : 'w-full';
 
       return `
-        <article class="${cardWidth} flex flex-col bg-white rounded-[2.5rem] shadow-[0_30px_100px_-20px_rgba(0,0,0,0.12)] hover:shadow-[0_40px_120px_-20px_rgba(0,0,0,0.18)] transition-all duration-700 overflow-hidden border-2 border-gray-50 group reveal-up" data-premium-card data-id="${product.id}">
-          <!-- Image Container: Portrait Aspect Ratio for Stately look -->
-          <div class="w-full aspect-[4/5] overflow-hidden relative bg-gray-50 uppercase">
+        <article class="${cardClass} flex flex-col bg-white rounded-3xl shadow-sm hover:shadow-2xl transition-all duration-500 overflow-hidden border border-gray-100 group reveal-up" data-premium-card data-id="${product.id}">
+          <!-- Image Container: Square for Consistency -->
+          <div class="w-full aspect-square overflow-hidden relative bg-gray-50 uppercase">
             ${badgeHtml}
-            <img src="${image}" alt="${name}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-[2s] ease-out" onerror="this.src='/assets/products/premium_product_placeholder.png'">
-            <div class="absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-black/5 opacity-0 group-hover:opacity-100 transition-opacity duration-700"></div>
+            <img src="${image}" alt="${name}" loading="lazy" class="w-full h-full object-contain p-6 group-hover:scale-110 transition-transform duration-[1.5s] ease-out" onerror="this.src='/assets/products/premium_product_placeholder.png'">
+            <div class="product-shine"></div>
           </div>
 
-          <!-- Content Area: Luxe Padding p-10 -->
-          <div class="p-10 flex flex-col flex-grow text-left">
-            <div class="flex items-center justify-between mb-6">
-               <span class="text-[11px] font-black text-primary uppercase tracking-[0.3em] opacity-40">${product.category?.name || 'Exclusive Domain'}</span>
-               <div class="flex items-center gap-2 px-4 py-1.5 bg-primary/5 rounded-full border border-primary/10">
-                  <span class="material-symbols-outlined text-sm text-primary fill-primary">star</span>
-                  <span class="text-xs font-bold text-gray-900 tracking-tighter">${rating}/5.0</span>
+          <!-- Content Area -->
+          <div class="p-6 flex flex-col flex-grow text-left">
+            <div class="flex items-center justify-between mb-3">
+               <span class="text-[9px] font-black text-primary uppercase tracking-[0.3em] opacity-40">${product.category?.name || 'Exclusive Domain'}</span>
+               <div class="flex items-center gap-1.5 px-2.5 py-1 bg-primary/5 rounded-lg border border-primary/10">
+                  <span class="material-symbols-outlined text-[10px] text-primary fill-primary">star</span>
+                  <span class="text-[10px] font-bold text-gray-900 tracking-tighter">${rating}</span>
                </div>
             </div>
 
-            <h3 class="text-3xl md:text-4xl font-headline text-gray-900 mb-4 italic leading-tight group-hover:text-primary transition-colors duration-500">${name}</h3>
-            <p class="text-base text-gray-500 font-body mb-8 line-clamp-2 leading-relaxed italic opacity-70">${shortDesc}</p>
+            <h3 class="text-xl font-headline text-gray-900 mb-2 italic leading-tight group-hover:text-primary transition-colors duration-500 line-clamp-1 h-[1.2em]">${name}</h3>
+            <p class="text-xs text-gray-500 font-body mb-6 line-clamp-2 leading-relaxed italic opacity-70 h-[3em]">${shortDesc}</p>
             
-            <!-- Key Benefits: Premium Spacing -->
-            <ul class="space-y-4 mb-10">
-              ${benefits.slice(0,3).map(b => `
-                <li class="flex items-start gap-4 text-[14px] text-gray-700 font-medium">
-                  <div class="p-0.5 rounded-full bg-primary/10 mt-0.5">
-                    <span class="material-symbols-outlined text-primary text-[10px] block">check</span>
-                  </div>
-                  <span class="opacity-90 tracking-tight">${b}</span>
-                </li>
-              `).join('')}
-            </ul>
-
-            <div class="mt-auto pt-8 border-t border-gray-100">
-               <div class="flex items-baseline gap-3 mb-8">
-                 <span class="text-4xl font-bold text-gray-900 tracking-tighter">$${price}</span>
-                 <span class="text-sm text-gray-400 line-through tracking-normal opacity-50">$${(parseFloat(price) * 1.4).toFixed(2)}</span>
+            <div class="mt-auto pt-6 border-t border-gray-50">
+               <div class="flex items-baseline gap-2 mb-6">
+                 <span class="text-2xl font-bold text-gray-900 tracking-tighter">$${price}</span>
+                 <span class="text-[10px] text-gray-400 line-through tracking-normal opacity-50">$${(parseFloat(price) * 1.4).toFixed(2)}</span>
                </div>
 
-              <div class="flex flex-col gap-4">
-                <a href="${product.affiliateUrl || '#'}" target="_blank" class="w-full py-5 bg-gradient-to-r from-black to-gray-800 text-white rounded-[1.2rem] hover:scale-[1.02] transition-all duration-500 font-bold text-base flex items-center justify-center gap-4 shadow-[0_20px_40px_-10px_rgba(0,0,0,0.3)]">
-                  Check Latest Price
-                  <span class="material-symbols-outlined text-lg">payments</span>
+              <div class="flex flex-col gap-3">
+                <a href="${product.affiliateUrl || '#'}" target="_blank" class="w-full py-4 bg-black text-white rounded-xl hover:scale-[1.02] transition-all duration-300 font-bold text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 shadow-lg shimmer-btn">
+                  CHECK PRICE
+                  <span class="material-symbols-outlined text-sm">payments</span>
                 </a>
-                <button onclick="openQuickView('${product.id}')" class="w-full py-5 bg-gray-50 text-gray-900 rounded-[1.2rem] hover:bg-gray-100 transition-all font-bold text-base flex items-center justify-center gap-4 border border-gray-100">
-                  Quick View
-                  <span class="material-symbols-outlined text-lg">unfold_more</span>
+                <button onclick="openQuickView('${product.id}')" class="w-full py-4 bg-gray-50 text-gray-900 rounded-xl hover:bg-gray-100 transition-all font-bold text-[10px] tracking-[0.2em] flex items-center justify-center gap-3 border border-gray-100">
+                  QUICK VIEW
+                  <span class="material-symbols-outlined text-sm">unfold_more</span>
                 </button>
               </div>
-              <p class="text-[11px] text-center text-gray-400 mt-6 italic font-body opacity-60">Price and availability may vary on the partner website.</p>
+            </div>
+          </div>
+        </article>
+      `;
             </div>
           </div>
         </article>
@@ -513,8 +518,19 @@ class MRTApp {
     try {
       if (!Array.isArray(categories)) return;
       const slots = ['cat-slot-1', 'cat-slot-2', 'cat-slot-3', 'cat-slot-4'];
-      const firstFour = categories.slice(0, 4);
       
+      // PRIORITY: Prioritize the most professional categories for the boutique homepage
+      const prioritySlugs = ['home-kitchen', 'health-wellness', 'electronics-accessories', 'pet-supplies'];
+      const firstFour = prioritySlugs.map(slug => categories.find(c => c.slug === slug)).filter(Boolean);
+      
+      // Fallback to slice(0, 4) only if priority categories are missing
+      if (firstFour.length < 4) {
+        const remaining = categories.filter(c => !prioritySlugs.includes(c.slug));
+        while (firstFour.length < 4 && remaining.length > 0) {
+            firstFour.push(remaining.shift());
+        }
+      }
+
       console.log(`[MRT] Rendering Bento Grid with ${firstFour.length} items.`);
 
       firstFour.forEach((c, index) => {
@@ -570,9 +586,12 @@ class MRTApp {
       const container = document.getElementById('category-carousels-container');
       if (!container) return;
       
-      container.innerHTML = categories.map(c => {
+      container.innerHTML = categories.map((c, idx) => {
           const list = products.filter(p => p.categoryId === c.id || p.category?.slug === c.slug).slice(0, 8);
           if (list.length === 0) return '';
+          
+          const isAlt = idx % 2 === 1;
+          const bgClass = isAlt ? 'bg-[#fcf8f5]' : 'bg-white';
           
           const primary = c.theme?.primary || '#914d00';
           const secondary = c.theme?.secondary || '#ff8c00';
@@ -580,18 +599,21 @@ class MRTApp {
           const g = parseInt(primary.slice(3, 5), 16) || 77;
           const b = parseInt(primary.slice(5, 7), 16) || 0;
           
-          const itemsHtml = list.map(p => this.createProductCard(p, { variant: 'homepage' })).join('');
+          const itemsHtml = list.map(p => this.createProductCard(p, { isCarousel: true })).join('');
           
           return `
-            <section class="py-24 bg-surface overflow-hidden carousel-section" style="--category-primary:${primary};--category-secondary:${secondary};--category-primary-glow:rgba(${r},${g},${b},0.15)">
-                <div class="px-8 max-w-screen-2xl mx-auto flex justify-between items-end mb-12 reveal-up">
-                    <h2 class="text-4xl font-headline italic">${c.name.split(' ').map((word, i, arr) => i === arr.length - 1 ? `<i>${word}</i>` : word).join(' ')}</h2>
-                    <div class="section-nav flex items-center space-x-6">
-                        <button class="nav-prev hover:text-primary transition-all duration-300" data-target="${c.slug}-carousel"><span class="material-symbols-outlined text-[36px]">arrow_back_ios</span></button>
-                        <button class="nav-next hover:text-primary transition-all duration-300" data-target="${c.slug}-carousel"><span class="material-symbols-outlined text-[36px]">arrow_forward_ios</span></button>
+            <section class="py-24 md:py-32 ${bgClass} overflow-hidden carousel-section border-b border-outline-variant/10" style="--category-primary:${primary};--category-secondary:${secondary};--category-primary-glow:rgba(${r},${g},${b},0.15)">
+                <div class="px-8 max-w-screen-2xl mx-auto flex justify-between items-end mb-16 reveal-up">
+                    <div class="flex flex-col">
+                        <span class="text-[10px] font-black text-primary uppercase tracking-[0.5em] mb-4 opacity-60">Boutique Department</span>
+                        <h2 class="text-5xl md:text-7xl font-headline italic tracking-tighter">${c.name.split(' ').map((word, i, arr) => i === arr.length - 1 ? `<i>${word}</i>` : word).join(' ')}</h2>
+                    </div>
+                    <div class="section-nav flex items-center space-x-8">
+                        <button class="nav-prev hover:text-primary transition-all duration-300 transform hover:-translate-x-2" data-target="${c.slug}-carousel"><span class="material-symbols-outlined text-[48px] opacity-40 hover:opacity-100">keyboard_backspace</span></button>
+                        <button class="nav-next hover:text-primary transition-all duration-300 transform hover:translate-x-2" data-target="${c.slug}-carousel"><span class="material-symbols-outlined text-[48px] opacity-40 hover:opacity-100">trending_flat</span></button>
                     </div>
                 </div>
-                <div id="${c.slug}-carousel" class="px-8 pb-12 peek-container flex overflow-x-auto snap-x snap-mandatory gap-6 no-scrollbar">
+                <div id="${c.slug}-carousel" class="px-8 pb-12 peek-container flex overflow-x-auto snap-x snap-mandatory gap-8 no-scrollbar scroll-smooth">
                     ${itemsHtml}
                 </div>
             </section>

@@ -47,10 +47,21 @@
   -webkit-mask-clip: text;
 }
 
-@layer base {
   body {
     @apply font-body bg-surface text-on-surface selection:bg-primary selection:text-white;
     -webkit-font-smoothing: antialiased;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Mobile-specific base styles */
+  @media (max-width: 768px) {
+    html {
+      font-size: 14px;
+    }
+    
+    body {
+      overflow-x: hidden;
+    }
   }
 }
 
@@ -59,9 +70,36 @@
 }
 
 @layer components {
-  /* Premium Glass Navbar */
+  /* Premium Glass Navbar - Mobile Optimized */
   .glass-nav {
     @apply bg-white/95 border-b border-outline-variant/10 sticky top-0 z-50;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+  
+  /* Mobile Menu Styles */
+  @media (max-width: 768px) {
+    .glass-nav {
+      @apply px-4 py-3;
+    }
+    
+    #mobile-menu {
+      @apply fixed top-[60px] left-0 right-0 bg-white backdrop-blur-xl shadow-2xl;
+      @apply flex-col items-start space-x-0 space-y-4 p-6;
+      @apply transform -translate-x-full transition-transform duration-300;
+      max-height: calc(100vh - 60px);
+      overflow-y: auto;
+      background: rgba(255, 255, 255, 0.98);
+    }
+    
+    #mobile-menu.active {
+      @apply translate-x-0;
+    }
+    
+    #mobile-menu a {
+      @apply w-full py-3 px-4 rounded-xl text-base;
+      @apply hover:bg-primary/5 transition-all;
+    }
   }
 
   /* Logo Glow Filters */
@@ -74,33 +112,56 @@
   .logo-glow:hover {
     transform: scale(1.03);
   }
+  
+  /* Mobile: Reduce logo size */
+  @media (max-width: 768px) {
+    .logo-glow {
+      height: 32px;
+      width: auto;
+    }
+  }
 
   /* Strategic Approach Numerical Watermarks */
   .approach-card {
     @apply relative overflow-hidden bg-white p-10 rounded-[2.5rem] border border-outline-variant/20 transition-all duration-700 hover:shadow-xl hover:-translate-y-2;
+  }
+  
+  /* Mobile: Smaller padding and border radius */
+  @media (max-width: 768px) {
+    .approach-card {
+      @apply p-6 rounded-[1.5rem];
+    }
   }
 
   .approach-card::before {
     content: attr(data-watermark);
     @apply absolute -top-8 -right-8 text-[140px] font-headline italic opacity-[0.05] text-[#914d00] select-none pointer-events-none;
   }
+  
+  /* Mobile: Smaller watermark */
+  @media (max-width: 768px) {
+    .approach-card::before {
+      @apply text-[80px] -top-4 -right-4;
+    }
+  }
 
-  /* Boutique Product Cards */
+  /* Boutique Product Cards - Mobile Optimized */
   .product-card {
     @apply bg-white rounded-[2.5rem] p-6 shadow-sm border border-orange-100/50 hover:shadow-2xl transition-all duration-700;
+  }
+  
+  @media (max-width: 768px) {
+    .product-card {
+      @apply rounded-[1.5rem] p-4;
+    }
   }
 
   /* Reveal Animations Base - Improved for reliability */
   .reveal-up {
-    opacity: 1; /* Force visible by default for reliability */
+    opacity: 1;
     transform: translateY(0);
     transition: all 1.2s cubic-bezier(0.2, 1, 0.3, 1);
   }
-  .reveal-up.active {
-    opacity: 1;
-    transform: translateY(0);
-  }
-
   .reveal-up.active {
     opacity: 1;
     transform: translateY(0);
@@ -110,10 +171,22 @@
   .hide-scrollbar::-webkit-scrollbar { display: none; }
   .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 
-  /* UI/UX Pro Max: Product Cards - Simplified for Professional Clarity */
+  /* UI/UX Pro Max: Product Cards - Mobile Optimized */
   .product-card-premium {
     @apply relative w-full bg-white border border-outline-variant/30 rounded-[2rem] p-6 transition-all duration-700 hover:shadow-[0_45px_100px_-20px_rgba(0,0,0,0.12)] hover:-translate-y-2 flex flex-col h-full overflow-hidden;
     box-shadow: 0 15px 45px -12px rgba(0,0,0,0.06);
+  }
+  
+  /* Mobile: Smaller cards, less padding */
+  @media (max-width: 768px) {
+    .product-card-premium {
+      @apply rounded-[1.25rem] p-4;
+      box-shadow: 0 8px 24px -8px rgba(0,0,0,0.08);
+    }
+    
+    .product-card-premium:hover {
+      @apply -translate-y-1;
+    }
   }
 
   .product-card-premium::before {
@@ -132,10 +205,23 @@
   .product-card-compact {
     @apply rounded-[1.75rem] p-4;
   }
+  
+  @media (max-width: 768px) {
+    .product-card-compact {
+      @apply rounded-[1rem] p-3;
+    }
+  }
 
   .image-glass-container {
     @apply relative h-64 w-full rounded-[1.5rem] overflow-hidden bg-surface-variant/10 p-6 transition-all duration-700 flex items-center justify-center;
     border: 1px solid rgba(0,0,0,0.03);
+  }
+  
+  /* Mobile: Smaller image containers */
+  @media (max-width: 768px) {
+    .image-glass-container {
+      @apply h-48 rounded-[1rem] p-4;
+    }
   }
 
   .premium-glow {
@@ -159,6 +245,17 @@
   @keyframes floating {
     0%, 100% { transform: translateY(0) scale(1.02); }
     50% { transform: translateY(-12px) scale(1.05); }
+  }
+  
+  /* Mobile: Reduce floating animation */
+  @media (max-width: 768px) {
+    .floating-image {
+      animation: floating-mobile 3s ease-in-out infinite;
+    }
+    @keyframes floating-mobile {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-6px) scale(1.02); }
+    }
   }
 
   /* Shimmer Effect for Buttons */
@@ -195,6 +292,7 @@
   .detail-scrollbar::-webkit-scrollbar-thumb {
     @apply bg-primary/20 rounded-full hover:bg-primary/40 transition-colors;
   }
+  
   /* Check Deal Button refinement */
   .product-card-premium a {
     @apply relative overflow-hidden transition-all duration-500 transform-gpu;
@@ -210,23 +308,48 @@
     @apply opacity-100;
   }
 
+  /* Peek Container - Mobile Optimized */
   .peek-container {
     @apply flex flex-nowrap overflow-x-auto scroll-smooth snap-x snap-mandatory gap-10 pb-12 cursor-grab active:cursor-grabbing;
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
     min-height: 520px;
+  }
+  
+  /* Mobile: Smaller gaps and height */
+  @media (max-width: 768px) {
+    .peek-container {
+      @apply gap-4 pb-6;
+      min-height: 420px;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
   }
 
   .peek-container::-webkit-scrollbar {
-    display: none; /* Chrome, Safari, and Opera */
+    display: none;
   }
 
   .section-nav {
     @apply flex items-center space-x-6;
   }
+  
+  /* Mobile: Hide navigation arrows, use swipe instead */
+  @media (max-width: 768px) {
+    .section-nav {
+      @apply hidden;
+    }
+  }
 
   .social-inquiry-btn {
     @apply p-4 rounded-2xl bg-white/80 border border-white/60 backdrop-blur-md shadow-lg transition-all duration-500 hover:scale-110 active:scale-95 flex items-center justify-center;
+  }
+  
+  /* Mobile: Smaller social buttons */
+  @media (max-width: 768px) {
+    .social-inquiry-btn {
+      @apply p-3 rounded-xl;
+    }
   }
 
   /* Review System Styles */
@@ -275,6 +398,59 @@
     50% { transform: translateY(-15px) rotate(2deg); }
     100% { transform: translateY(0px) rotate(0deg); }
   }
+  
+  /* Mobile: Reduce elite floating */
+  @media (max-width: 768px) {
+    .floating-image {
+      animation: floating_elite_mobile 6s ease-in-out infinite;
+    }
+    @keyframes floating_elite_mobile {
+      0% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-8px) rotate(1deg); }
+      100% { transform: translateY(0px) rotate(0deg); }
+    }
+  }
+  
+  /* Mobile Typography Adjustments */
+  @media (max-width: 768px) {
+    h1 {
+      @apply text-3xl leading-tight;
+    }
+    
+    h2 {
+      @apply text-2xl leading-tight;
+    }
+    
+    h3 {
+      @apply text-xl;
+    }
+    
+    p {
+      @apply text-sm leading-relaxed;
+    }
+    
+    button {
+      @apply text-sm px-6 py-3;
+    }
+  }
+  
+  /* Mobile: Touch-friendly buttons */
+  @media (max-width: 768px) {
+    button, a[role="button"], .btn {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+  
+  /* Mobile: Spacing adjustments */
+  @media (max-width: 768px) {
+    section {
+      @apply py-12;
+    }
+    
+    .container, .max-w-screen-2xl {
+      @apply px-4;
+    }
   }
 }
 
@@ -287,3 +463,11 @@
   border: 3px solid #fff8f4;
 }
 ::-webkit-scrollbar-thumb:hover { background: rgba(145, 77, 0, 0.5); }
+
+/* Mobile: Thinner scrollbar */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-thumb { 
+    border: 2px solid #fff8f4;
+  }
+}
