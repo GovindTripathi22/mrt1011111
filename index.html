@@ -363,6 +363,45 @@
             <p class="text-on-surface-variant font-body text-xs tracking-[0.4em] uppercase opacity-40">© 2024 MRT International Holding LLC. All Rights Reserved.</p>
         </div>
     </footer>
+    <!-- Quick View Modal Skeleton -->
+    <div id="quick-view-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/60 backdrop-blur-sm" onclick="closeQuickView()"></div>
+        <div class="bg-white rounded-3xl w-full max-w-4xl max-h-[90vh] overflow-y-auto flex flex-col md:flex-row relative z-10 animate-fade-in shadow-2xl">
+            <!-- Close Button -->
+            <button onclick="closeQuickView()" class="absolute top-6 right-6 p-2 bg-gray-100 hover:bg-gray-200 rounded-full transition-colors z-20">
+                <span class="material-symbols-outlined text-gray-800">close</span>
+            </button>
+            
+            <!-- Modal Content (Dynamically Populated) -->
+            <div class="w-full md:w-1/2 h-[300px] md:h-auto bg-gray-50 flex items-center justify-center p-8">
+                <img id="qv-image" src="" alt="" class="max-w-full max-h-full object-contain drop-shadow-xl">
+            </div>
+            
+            <div class="w-full md:w-1/2 p-8 md:p-12 flex flex-col">
+                <div id="qv-badge" class="inline-block px-3 py-1 bg-primary/10 text-primary text-[10px] font-bold uppercase tracking-widest rounded-full mb-4 w-fit">Elite Pick</div>
+                <h2 id="qv-title" class="text-3xl md:text-4xl font-headline text-gray-900 mb-2 italic">Product Name</h2>
+                <div id="qv-rating" class="flex items-center text-primary mb-6 gap-1">
+                    <span class="material-symbols-outlined text-sm fill-primary">star</span>
+                    <span class="text-xs font-bold">4.9 / 5</span>
+                </div>
+                
+                <p id="qv-description" class="text-gray-600 mb-8 leading-relaxed font-body">Premium quality item carefully sourced for our elite collection.</p>
+                
+                <div class="mt-auto pt-8 border-t border-gray-100">
+                    <div class="flex items-center justify-between mb-8">
+                        <div>
+                            <p class="text-[10px] uppercase font-bold text-gray-400 tracking-widest mb-1">Price</p>
+                            <p id="qv-price" class="text-3xl font-bold text-gray-900">$39.99</p>
+                        </div>
+                    </div>
+                    <a id="qv-amazon-link" href="#" target="_blank" class="w-full py-4 bg-black text-white rounded-xl hover:bg-gray-800 transition-all font-bold text-sm flex items-center justify-center gap-3">
+                        <span class="material-symbols-outlined">shopping_cart</span>
+                        BUY ON AMAZON
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 
 </body>
 </html>

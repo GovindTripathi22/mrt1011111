@@ -71,6 +71,15 @@ class MRTApp {
     this.init();
     
     this.cart = new ShoppingCart();
+    
+    // Global state for Quick View and persistence
+    this.allProducts = [];
+    this.allCategories = [];
+    
+    // Bind global functions for onclick handlers
+    window.openQuickView = (id) => this.openQuickView(id);
+    window.closeQuickView = () => this.closeQuickView();
+    window.mrtApp = this;
   }
 
   async init() {
@@ -221,69 +230,55 @@ class MRTApp {
   }
 
   createProductCard(product, options = {}) {
-    const variant = options.variant || 'boutique';
-    const name = product.name || 'Product';
-    const badge = product.badge || 'Top Pick';
-    const shortDesc = product.shortBenefit || 'Premium quality product selected for elite needs.';
-    const benefits = (product.keyBenefits ? (typeof product.keyBenefits === 'string' ? JSON.parse(product.keyBenefits) : product.keyBenefits) : ['High Quality', 'Durable', 'Effective']).slice(0, 3);
-    const ratingStr = product.rating || '4.8/5 Recommended';
-    const image = product.image || '';
-    const affiliateUrl = product.affiliateUrl || '#';
-    
-    const ratingDisplay = `⭐ [${product.ratingValue || 4.8}/5 Recommended]`;
-    
-    const cardClasses = variant === 'homepage'      ? 'product-card-premium product-card-compact group flex-shrink-0 w-[300px] md:w-[380px] snap-start cursor-pointer'
-      : 'product-card-premium group snap-start block w-full border border-outline-variant/20 hover:border-transparent transition-all duration-300 cursor-pointer';
-
-    return `
-      <article class="${cardClasses} p-6 group" data-premium-card data-id="${product.id}">
-        <div class="relative mb-8 rounded-[2rem] overflow-hidden bg-surface-variant/5 border border-outline-variant/10 p-12 flex items-center justify-center min-h-[320px] transition-all duration-700 group-hover:scale-[1.02] group-hover:bg-surface-variant/10">
-          <div class="absolute top-6 left-6 z-30 px-5 py-2 rounded-full text-[10px] font-black uppercase tracking-[0.35em] shadow-lg border border-white/20" style="background-color: var(--category-primary, #914d00); color: white;">
-            ${badge}
-          </div>
-
-          <div class="product-shine"></div>
-
-          ${image
-            ? `<img src="${image}" alt="${name}" loading="lazy" decoding="async" class="w-full h-full object-contain relative z-10 transition-all duration-700 group-hover:scale-110 floating-image drop-shadow-[0_20px_40px_rgba(0,0,0,0.1)]">`
-            : `<div class="w-full h-full flex items-center justify-center opacity-20 text-on-surface"><span class="material-symbols-outlined text-7xl">image</span></div>`
-          }
-        </div>
-`+ "        " + `
-        <div class="flex flex-col flex-grow text-left relative z-20">
-          <div class="flex items-center gap-3 mb-3">
-             <span class="text-[10px] uppercase font-black tracking-[0.4em] text-primary/40">${product.category?.name || 'Collection'}</span>
-             <div class="h-[1px] flex-grow bg-primary/10"></div>
-          </div>
-          <h3 class="text-3xl md:text-4xl font-headline italic text-on-surface mb-4 leading-none tracking-tighter group-hover:text-primary transition-colors">${name}</h3>
-          <p class="text-base text-on-surface-variant font-body mb-8 line-clamp-2 opacity-60 leading-relaxed font-medium capitalize italic">${shortDesc}</p>
-          
-          <div class="flex flex-col gap-5">
-            <div class="flex items-center justify-between pb-6 border-b border-primary/5">
-               <div class="flex flex-col">
-                 <span class="text-[10px] uppercase font-black tracking-widest text-primary/40 mb-1">Elite Pricing</span>
-                 <span class="text-4xl font-bold text-on-surface tracking-tighter">$${product.price ? product.price.toFixed(2) : '39.99'}</span>
-               </div>
-               <div class="flex items-center gap-2 bg-primary/5 px-4 py-2 rounded-2xl border border-primary/10">
-                  <span class="material-symbols-outlined text-sm text-primary fill-primary">star</span>
-                  <span class="text-xs font-black text-primary">${product.ratingValue || 4.8}</span>
-               </div>
+    try {
+      const name = product.name || 'Premium Product';
+      const shortDesc = product.shortBenefit || 'Premium quality product selected for elite needs.';
+      const image = product.image || '/assets/products/premium_product_placeholder.png';
+      const price = product.price ? product.price.toFixed(2) : '39.99';
+      const rating = product.ratingValue || 4.8;
+      
+      // Enforce standardized aspect ratio and flex utility as requested
+      return `
+        <article class="flex flex-col h-full bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 group" data-premium-card data-id="${product.id}">
+          <!-- Image Container: Fixed Aspect Ratio -->
+          <div class="w-full aspect-[4/3] overflow-hidden relative bg-gray-50">
+            <img src="${image}" alt="${name}" loading="lazy" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='/assets/products/premium_product_placeholder.png'">
+            <div class="absolute top-4 left-4 z-10 px-3 py-1 bg-black/10 backdrop-blur-md rounded-full text-[9px] font-black text-black uppercase tracking-widest border border-black/5">
+              ${product.badge || 'Elite'}
             </div>
+          </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-              <a href="${affiliateUrl}" target="_blank" class="bg-[#FF9900] text-[#111] rounded-2xl py-5 px-4 text-center text-[10px] font-black uppercase tracking-[0.25em] shadow-2xl shadow-orange-500/20 hover:scale-105 active:scale-95 transition-all duration-500 flex items-center justify-center gap-3">
-                <span class="material-symbols-outlined text-base">shopping_bag</span>
-                Amazon Selection
-              </a>
-              <button data-id="${product.id}" class="glass-panel-premium text-primary rounded-2xl py-5 px-4 text-center text-[10px] font-black uppercase tracking-[0.25em] hover:bg-primary hover:text-white transition-all duration-500 active:scale-95 flex items-center justify-center gap-3" onclick="window.mrtApp.openQuickView('${product.id}')">
-                <span class="material-symbols-outlined text-base">auto_awesome</span>
-                Pro Max View
+          <!-- Content Area: Flex Grow pushes buttons to bottom -->
+          <div class="p-5 flex flex-col flex-grow text-left">
+            <div class="flex items-center gap-2 mb-2">
+               <span class="text-[9px] font-black text-primary uppercase tracking-[0.3em] opacity-60">${product.category?.name || 'Collection'}</span>
+            </div>
+            <h3 class="text-xl font-headline text-gray-900 mb-2 italic line-clamp-1 leading-tight">${name}</h3>
+            <p class="text-xs text-gray-500 font-body mb-6 line-clamp-2 leading-relaxed italic opacity-80">${shortDesc}</p>
+            
+            <div class="mt-auto pt-4 flex flex-col gap-3">
+              <div class="flex items-center justify-between mb-1">
+                <span class="text-2xl font-bold text-gray-900 tracking-tighter">$${price}</span>
+                <div class="flex items-center gap-1 bg-primary/5 px-2 py-1 rounded-lg">
+                   <span class="material-symbols-outlined text-[10px] text-primary fill-primary">star</span>
+                   <span class="text-[10px] font-bold text-primary">${rating}</span>
+                </div>
+              </div>
+
+              <!-- Quick View Button (Standardized) -->
+              <button onclick="openQuickView('${product.id}')" class="w-full py-3 bg-black text-white rounded-xl hover:bg-gray-800 transition-colors font-medium text-sm flex items-center justify-center gap-2">
+                <span class="material-symbols-outlined text-sm">visibility</span>
+                Quick View
               </button>
             </div>
           </div>
-        </div>
-      </article>
-    `;
+        </article>
+      `;
+    } catch (err) {
+      console.error("[MRT] Error creating product card:", err);
+      return '';
+    }
+  }
   }
 
   renderBoutiqueProducts(products, category, container) {
@@ -436,13 +431,10 @@ class MRTApp {
         fetch(`/api/products?_t=${Date.now()}`)
       ]);
       
-      const categories = catsRes.ok ? await catsRes.json() : [];
-      const productsData = productsRes.ok ? await productsRes.json() : { products: [] };
-      const products = productsData.products || [];
-      
-      console.log(`[MRT] Data Sync: ${categories.length} categories, ${products.length} products`);
-
       if (categories.length > 0) {
+        this.allCategories = categories;
+        this.allProducts = products;
+        
         this.renderBentoGrid(categories);
         this.renderDynamicCarousels(categories, products);
         this.updateSEO("Home", "Global Sourcing Platform");
@@ -457,6 +449,7 @@ class MRTApp {
   }
 
   renderBentoGrid(categories) {
+    try {
       if (!Array.isArray(categories)) return;
       const slots = ['cat-slot-1', 'cat-slot-2', 'cat-slot-3', 'cat-slot-4'];
       const firstFour = categories.slice(0, 4);
@@ -482,9 +475,13 @@ class MRTApp {
             </a>
           `;
       });
+    } catch (err) {
+      console.error("[MRT] Bento Grid Render Error:", err);
+    }
   }
 
   renderCategoriesGrid(categories) {
+    try {
       const grid = document.getElementById('categories-grid');
       if (!grid) return;
       
@@ -502,9 +499,13 @@ class MRTApp {
             </a>
           `;
       }).join('');
+    } catch (err) {
+      console.error("[MRT] Categories Grid Render Error:", err);
+    }
   }
 
   renderDynamicCarousels(categories, products) {
+    try {
       const container = document.getElementById('category-carousels-container');
       if (!container) return;
       
@@ -537,6 +538,9 @@ class MRTApp {
       }).join('');
       this.initCardInteractions();
       this.bindEvents();
+    } catch (err) {
+      console.error("[MRT] Dynamic Carousels Render Error:", err);
+    }
   }
 
   async renderHomepageTestimonials() {
@@ -657,117 +661,54 @@ class MRTApp {
     });
   }
 
-  async openQuickView(productId) {
+  openQuickView(productId) {
     try {
-      // PRO MAX: Resilient dual-path fetching for dev stability (127.0.0.1 priority)
-      let response = await fetch(`/api/products/${productId}?_t=${Date.now()}`);
-      
-      if (!response.ok) {
-        console.warn(`[MRT] Relative API fetch failed (${response.status}), attempting direct bypass to 127.0.0.1...`);
-        response = await fetch(`http://127.0.0.1:3001/api/products/${productId}?_t=${Date.now()}`);
+      const product = this.allProducts.find(p => String(p.id) === String(productId));
+      if (!product) {
+        console.warn(`[MRT] Product ${productId} not found in state.`);
+        return;
       }
 
-      if (!response.ok) throw new Error('Product details unavailable');
-      const product = await response.json();
+      const modal = document.getElementById('quick-view-modal');
+      const img = document.getElementById('qv-image');
+      const title = document.getElementById('qv-title');
+      const desc = document.getElementById('qv-description');
+      const price = document.getElementById('qv-price');
+      const link = document.getElementById('qv-amazon-link');
+      const badge = document.getElementById('qv-badge');
+      const rating = document.getElementById('qv-rating');
 
-      let reviews = [];
-      try {
-        let reviewsRes = await fetch(`/api/reviews/${productId}?_t=${Date.now()}`);
-        if (!reviewsRes.ok) {
-           reviewsRes = await fetch(`http://127.0.0.1:3001/api/reviews/${productId}?_t=${Date.now()}`);
-        }
-        if (reviewsRes.ok) reviews = await reviewsRes.json();
-      } catch(e) { console.warn('Reviews fetch failed, continuing with empty list'); }
+      if (!modal || !img || !title) return;
 
-      const benefits = (product.keyBenefits ? (typeof product.keyBenefits === 'string' ? JSON.parse(product.keyBenefits) : product.keyBenefits) : []).slice(0, 4);
-
-      const overlay = document.createElement('div');
-      overlay.className = 'fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-xl p-4 md:p-8 animate-fade-in';
-      overlay.innerHTML = `
-        <div class="bg-surface w-full max-w-6xl rounded-[3rem] shadow-2xl relative overflow-hidden flex flex-col md:flex-row max-h-[95vh] animate-scale-up border border-white/10">
-          <button class="absolute top-8 right-8 z-50 text-on-surface/40 hover:text-on-surface bg-white/10 hover:bg-white/20 p-3 rounded-full transition-all" id="close-quickview">
-            <span class="material-symbols-outlined text-3xl">close</span>
-          </button>
-          
-          <!-- Image Section -->
-          <div class="w-full md:w-1/2 bg-surface-variant/10 p-12 flex items-center justify-center relative group min-h-[400px]">
-            <div class="premium-glow-bg absolute inset-0 opacity-20 transition-opacity duration-1000"></div>
-            <img src="${product.image}" alt="${product.name}" class="w-full h-full object-contain relative z-10 floating-image drop-shadow-2xl">
-          </div>
-          
-          <!-- Info Section -->
-          <div class="w-full md:w-1/2 p-12 overflow-y-auto detail-scrollbar bg-surface/50 backdrop-blur-md">
-            <div class="mb-10">
-              <div class="flex items-center gap-3 mb-4">
-                <span class="px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest bg-primary text-white">${product.badge || 'Elite'}</span>
-                <div class="flex items-center gap-1 text-primary">
-                   <span class="material-symbols-outlined text-lg fill-primary">star</span>
-                   <span class="font-bold text-sm">${product.ratingValue || 4.9} / 5</span>
-                </div>
-              </div>
-              <h2 class="text-4xl md:text-5xl font-headline italic text-on-surface mb-4 leading-tight">${product.name}</h2>
-              <p class="text-lg text-on-surface-variant font-body opacity-80 leading-relaxed">${product.shortBenefit}</p>
-            </div>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
-              ${benefits.map(b => `
-                <div class="flex items-center gap-3 p-4 rounded-2xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-                  <span class="material-symbols-outlined text-primary text-xl" style="font-variation-settings: 'FILL' 1">verified</span>
-                  <span class="text-xs font-bold text-on-surface opacity-80 uppercase tracking-wide text-left">${b}</span>
-                </div>
-              `).join('')}
-            </div>
-            
-            <!-- Price & Action -->
-            <div class="flex flex-col sm:flex-row items-center justify-between gap-6 mb-12 p-8 rounded-3xl bg-primary/5 border border-primary/10">
-              <div class="text-center sm:text-left">
-                <p class="text-[10px] uppercase font-black tracking-widest text-primary opacity-60 mb-1">Store Price</p>
-                <span class="text-4xl font-bold text-on-surface">$${product.price ? product.price.toFixed(2) : '39.99'}</span>
-              </div>
-              <a href="${product.affiliateUrl}" target="_blank" class="shimmer-btn flex-grow sm:flex-grow-0 w-full sm:w-auto px-12 py-5 rounded-2xl bg-[#FF9900] text-[#111] font-black uppercase tracking-widest text-xs shadow-xl hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-3">
-                <span class="material-symbols-outlined">shopping_cart</span>
-                Buy on Amazon
-              </a>
-            </div>
-            
-            <!-- Reviews Segment -->
-            <div class="border-t border-outline-variant/10 pt-10">
-              <div class="flex items-center justify-between mb-8">
-                <h3 class="text-2xl font-headline italic">Recent <i>Insights</i></h3>
-                <span class="text-xs font-bold uppercase tracking-widest opacity-40">${reviews.length} Reviews</span>
-              </div>
-              
-              <div class="space-y-6">
-                ${reviews.length > 0 ? reviews.map(r => `
-                  <div class="p-6 rounded-3xl bg-white/5 border border-white/10 hover:border-primary/20 transition-all group/rev">
-                    <div class="flex justify-between items-center mb-4">
-                      <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center text-[10px] font-black text-primary">${r.userName.charAt(0)}</div>
-                        <span class="text-xs font-black uppercase tracking-wider text-on-surface">${r.userName}</span>
-                        ${r.isVerified ? `<span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1">verified</span>` : ''}
-                      </div>
-                      <div class="flex text-primary opacity-60">
-                        ${Array(r.rating).fill('<span class="material-symbols-outlined text-[10px] fill-primary">star</span>').join('')}
-                      </div>
-                    </div>
-                    <p class="text-sm font-body italic text-on-surface-variant opacity-80 leading-relaxed group-hover/rev:opacity-100 transition-opacity">"${r.comment}"</p>
-                  </div>
-                `).join('') : `<p class="text-center opacity-30 italic py-10">No insights shared yet.</p>`}
-              </div>
-            </div>
-          </div>
-        </div>
+      // Populate Modal Fields
+      img.src = product.image || '/assets/products/premium_product_placeholder.png';
+      img.alt = product.name;
+      title.textContent = product.name;
+      desc.textContent = product.shortBenefit || 'Premium selection from MRT International.';
+      price.textContent = `$${product.price ? product.price.toFixed(2) : '39.99'}`;
+      link.href = product.affiliateUrl || '#';
+      if (badge) badge.textContent = product.badge || 'Elite Pick';
+      if (rating) rating.innerHTML = `
+        <span class="material-symbols-outlined text-sm fill-primary">star</span>
+        <span class="text-xs font-bold">${product.ratingValue || 4.9} / 5</span>
       `;
 
-      document.body.appendChild(overlay);
+      // Show Modal
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
       document.body.style.overflow = 'hidden';
-
-      const close = () => { overlay.remove(); document.body.style.overflow = 'auto'; };
-      overlay.querySelector('#close-quickview').onclick = close;
-      overlay.onclick = (e) => { if (e.target === overlay) close(); };
-
+      
     } catch (err) {
-      console.error('Quick View Error:', err);
+      console.error('[MRT] Quick View Toggle Error:', err);
+    }
+  }
+
+  closeQuickView() {
+    const modal = document.getElementById('quick-view-modal');
+    if (modal) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.style.overflow = 'auto';
     }
   }
   async openReviewModal(productId, productName) {
