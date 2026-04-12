@@ -697,7 +697,11 @@ class MRTApp {
           
           const isLarge = index === 0;
           const bgCol = isLarge ? 'from-black/90 via-black/40' : 'from-black/80 via-black/20';
-          const imgUrl = c.image || `/assets/categories/${c.slug}.png`;
+          let imgUrl = c.image || `/assets/categories/${c.slug}.png`;
+          // PATCH: Force the correct pet supplies image
+          if (c.slug === 'pet-supplies' || c.name.toLowerCase().includes('pet')) {
+              imgUrl = '/assets/categories/pet-supplies.png'; 
+          }
           
           el.innerHTML = `
             <a href="category.html?c=${c.slug}" class="w-full h-full block relative group">
@@ -723,9 +727,13 @@ class MRTApp {
       grid.innerHTML = categories.map((c, index) => {
           const isSeventh = index === 6 || (index > 0 && index === categories.length - 1 && categories.length > 5);
           const bgCol = isSeventh ? 'from-black/90 via-black/40' : 'from-black/80 via-black/20';
+          
+          const isPet = c.slug === 'pet-supplies' || c.name.toLowerCase().includes('pet');
+          const imgSrc = isPet ? '/assets/categories/pet-supplies.png' : (c.image || `/assets/categories/${c.slug}.png`);
+
           return `
             <a href="category.html?c=${c.slug}" class="group relative ${isSeventh ? 'col-span-1 md:col-span-2 lg:col-span-3 h-[400px]' : 'h-[500px]'} rounded-[3rem] overflow-hidden shadow-sm hover:shadow-2xl transition-all duration-700 border border-outline-variant/10 block">
-                <img src="${c.image || `/assets/categories/${c.slug}.png`}" alt="${c.name}" loading="lazy" decoding="async" class="w-full h-full object-cover transition-transform duration-[1.5s] ${isSeventh ? 'group-hover:scale-105' : 'group-hover:scale-110'}">
+                <img src="${imgSrc}" alt="${c.name}" loading="lazy" decoding="async" class="w-full h-full object-cover transition-transform duration-[1.5s] ${isSeventh ? 'group-hover:scale-105' : 'group-hover:scale-110'}">
                 <div class="absolute inset-0 bg-gradient-to-${isSeventh ? 'r' : 't'} ${bgCol} to-transparent flex flex-col ${isSeventh ? 'justify-center p-20' : 'justify-end p-12'}">
                     <h3 class="${isSeventh ? 'text-5xl mb-6' : 'text-4xl mb-4'} text-white font-headline italic">${c.name}</h3>
                     <p class="${isSeventh ? 'text-white/70 text-xl mb-10 max-w-xl' : 'text-white/70 text-lg mb-8 opacity-0 group-hover:opacity-100 transition-opacity duration-500'}">${c.description || 'Explore our premium selection.'}</p>
@@ -761,7 +769,7 @@ class MRTApp {
           
           return `
             <section class="py-24 md:py-32 ${bgClass} overflow-hidden carousel-section border-b border-outline-variant/10" style="--category-primary:${primary};--category-secondary:${secondary};--category-primary-glow:rgba(${r},${g},${b},0.15)">
-                <div class="px-8 max-w-screen-2xl mx-auto flex justify-between items-end mb-16 reveal-up">
+                <div class="px-4 md:px-8 max-w-screen-2xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-end gap-6 mb-8 md:mb-16 reveal-up">
                     <div class="flex flex-col">
                         <span class="text-[10px] font-black text-primary uppercase tracking-[0.5em] mb-4 opacity-60">Boutique Department</span>
                         <h2 class="text-5xl md:text-7xl font-headline italic tracking-tighter">${c.name.split(' ').map((word, i, arr) => i === arr.length - 1 ? `<i>${word}</i>` : word).join(' ')}</h2>
@@ -1024,28 +1032,21 @@ class MRTApp {
   closeQuickView() {
     const modal = document.getElementById('mrt-qv-modal');
     if (!modal) return;
-
-    if (!modal.innerHTML.trim()) {
-      document.body.style.overflow = this.previousBodyOverflow;
-      return;
-    }
-
-    if (this.quickViewCleanupPending) return;
-
-    this.quickViewCleanupPending = true;
     modal.classList.remove('is-open');
-    document.body.style.overflow = this.previousBodyOverflow;
-
-    const cleanup = () => {
-      if (!modal.classList.contains('is-open')) {
-        modal.innerHTML = '';
-      }
-      this.quickViewCleanupPending = false;
-    };
-
-    // Remove from DOM after transition finishes, with a timeout fallback.
-    modal.addEventListener('transitionend', cleanup, { once: true });
-    setTimeout(cleanup, 500);
+    
+    // Ensure overflow is ALWAYS restored, even if transition fails
+    document.body.style.overflow = '';
+    document.body.classList.remove('modal-open');
+    
+    // Remove from DOM after transition finishes
+    modal.addEventListener('transitionend', () => {
+      if (!modal.classList.contains('is-open')) modal.innerHTML = '';
+    }, { once: true });
+    
+    // Safety fallback in case transition event doesn't fire on mobile Safari
+    setTimeout(() => {
+        if (!modal.classList.contains('is-open')) modal.innerHTML = '';
+    }, 500);
   }
 
   openReviewModal(id, name) {

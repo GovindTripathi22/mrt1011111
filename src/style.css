@@ -150,3 +150,77 @@
 
 @keyframes mrt-benefit-in { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
 .mrt-benefit-item { animation: mrt-benefit-in .4s ease both; }
+
+@layer base {
+  /* Strict Mobile Overflow Lock to prevent white space on the sides */
+  html, body {
+    max-width: 100vw;
+    width: 100%;
+    overflow-x: hidden;
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Make sure sections don't cause horizontal stretching */
+  section {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+}
+
+/* --- MOBILE OPTIMIZATION FIXES --- */
+
+/* Mobile Menu Overlay */
+@media (max-width: 767px) {
+  #mobile-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.98);
+    backdrop-filter: blur(20px);
+    flex-direction: column;
+    padding: 2rem 0;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-10px);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  #mobile-menu.active {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+    display: flex !important; /* Overrides Tailwind's hidden */
+  }
+  
+  #mobile-menu a {
+    width: 100%;
+    text-align: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+}
+
+/* Quick View Mobile Optimizations */
+@media(max-width: 639px){
+  .mrt-qv-img-col { 
+    min-height: 220px !important; 
+    padding: 16px !important; 
+  }
+  .mrt-qv-content-col { 
+    padding: 20px 20px 24px 20px !important; 
+  }
+  .mrt-qv-panel { 
+    max-height: 85vh; 
+    width: 95%; 
+    margin: 0 auto; 
+  }
+  .mrt-price-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+}
+
