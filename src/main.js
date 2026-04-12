@@ -54,10 +54,23 @@ class MRTApp {
     // 2. Library Guards
     if (typeof Lenis !== 'undefined') {
       this.lenis = new Lenis({
-        duration: 1.2,
-        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-        smoothWheel: true
+        duration: 1.4,
+        easing: (t) => 1 - Math.pow(1 - t, 4),   // quartic ease-out — ultra smooth
+        smoothWheel: true,
+        wheelMultiplier: 0.9,
+        touchMultiplier: 1.5,
+        infinite: false,
       });
+
+      // Hook Lenis into GSAP ticker if available for perfect sync
+      if (typeof gsap !== 'undefined') {
+        gsap.ticker.add((time) => { this.lenis?.raf(time * 1000); });
+        gsap.ticker.lagSmoothing(0);
+      } else {
+        // Fallback manual RAF loop
+        const raf = (time) => { this.lenis?.raf(time); requestAnimationFrame(raf); };
+        requestAnimationFrame(raf);
+      }
     }
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -267,10 +280,10 @@ class MRTApp {
   createProductCard(product, options = {}) {
     try {
       const name = product.name || 'Premium Product';
-      const shortDesc = product.shortBenefit || 'Premium quality product selected for elite needs.';
+      const shortDesc = product.shortBenefit || product.description || '';
 
       // Smart Image Resolving
-      let image = product.image || '/assets/products/premium_product_placeholder.png';
+      let image = product.image || '';
       if (!image || image.includes('placeholder')) {
         const cleanName = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
         const mapping = {
@@ -282,102 +295,108 @@ class MRTApp {
         image = `/assets/products/${mapping[cleanName] || cleanName + '.png'}`;
       }
 
-      const price       = product.price ? parseFloat(product.price).toFixed(2) : '39.99';
-      const oldPrice    = (parseFloat(price) * 1.42).toFixed(2);
+      // ── Price & Currency ──────────────────────────────────
+      const currency     = product.currency || 'USD';
+      const currencyMap  = {
+        USD: '$', INR: '₹', AED: 'د.إ', EUR: '€', GBP: '£',
+        JPY: '¥', CAD: 'CA$', AUD: 'A$', SGD: 'S$', SAR: '﷼'
+      };
+      const sym = currencyMap[currency] || currency + ' ';
+
+      const hasPrice    = product.price && parseFloat(product.price) > 0;
+      const price       = hasPrice ? parseFloat(product.price).toFixed(2) : null;
+      const hasOriginal = product.originalPrice && parseFloat(product.originalPrice) > price;
+      const oldPrice    = hasOriginal ? parseFloat(product.originalPrice).toFixed(2) : null;
+      const discountPct = (hasPrice && hasOriginal)
+        ? Math.round((1 - parseFloat(price) / parseFloat(oldPrice)) * 100)
+        : null;
+
       const rating      = (product.ratingValue || 4.8).toFixed(1);
-      const reviewCount = product.ratingCount || (Math.floor(Math.random() * 600) + 120);
+      const reviewCount = product.ratingCount || null;
       const isCarousel  = options.isCarousel || false;
       const badge       = product.badge || 'Top Pick';
       const affiliateUrl = product.affiliateUrl || '#';
       const productId   = product.id;
       const catName     = product.category?.name || 'Premium Collection';
 
-      // Star render helper
+      // ── Stars ─────────────────────────────────────────────
       const filledStars = Math.round(parseFloat(rating));
       const stars = [1,2,3,4,5].map(n =>
-        `<span class="mso" style="font-size:13px;color:${n <= filledStars ? '#f59e0b' : '#e5e7eb'};font-variation-settings:'FILL' 1">star</span>`
+        `<span class="material-symbols-outlined" style="color:${n <= filledStars ? '#f59e0b' : '#e2ddd8'};font-variation-settings:'FILL' 1;font-size:13px;line-height:1">star</span>`
       ).join('');
 
-      const cardWidth = isCarousel ? 'mrt-card-carousel' : 'mrt-card-grid';
+      // ── Price block ───────────────────────────────────────
+      let priceHtml;
+      if (hasPrice) {
+        priceHtml = `
+          <div class="product-card__price-row">
+            <span class="product-card__price">${sym}${price}</span>
+            ${oldPrice ? `<span class="product-card__old-price">${sym}${oldPrice}</span>` : ''}
+            ${discountPct ? `<span class="product-card__save-tag">-${discountPct}%</span>` : ''}
+          </div>`;
+      } else {
+        priceHtml = `
+          <div class="product-card__price-row no-price">
+            <span class="product-card__contact-btn">
+              <span class="material-symbols-outlined" style="font-size:13px">chat_bubble</span>
+              Ask for price
+            </span>
+          </div>`;
+      }
+
+      // ── Discount badge (circle top-right) ─────────────────
+      const discountBadgeHtml = discountPct
+        ? `<div class="product-card__discount-badge">${discountPct}%<br>OFF</div>`
+        : '';
 
       return `
-        <article class="mrt-product-card ${cardWidth} group" data-premium-card data-id="${productId}">
-
-          <!-- ── IMAGE ZONE ─────────────────────────── -->
-          <div class="mrt-card-img-wrap">
-
-            <!-- Badge + Discount -->
-            <div class="mrt-badge-row">
-              <div class="mrt-badge-pill">${badge}</div>
-              <div class="mrt-discount-pill">-29%</div>
-            </div>
-
-            <!-- Product image –– object-contain inside neutral bg -->
+        <article class="product-card ${isCarousel ? 'carousel-item' : ''}" data-id="${productId}" data-enhanced-card>
+          <div class="product-card__image-wrap">
+            <div class="product-card__badge">${badge}</div>
+            ${discountBadgeHtml}
             <img
               src="${image}"
               alt="${name}"
               loading="lazy"
-              class="mrt-card-img"
               onerror="this.src='/assets/products/premium_product_placeholder.png'">
-
-            <!-- Hover Overlay: Quick View text -->
-            <div class="mrt-img-overlay">
-              <button class="mrt-qv-overlay-btn" data-qv-btn data-id="${productId}">
-                <span class="mso" style="font-size:20px">visibility</span>
-                Quick View
-              </button>
-            </div>
           </div>
 
-          <!-- ── CONTENT ZONE ──────────────────────── -->
-          <div class="mrt-card-body">
-
-            <!-- Category + Rating row -->
-            <div class="mrt-card-meta">
-              <span class="mrt-card-category">${catName}</span>
-              <div class="mrt-card-stars">${stars} <span class="mrt-review-count">(${reviewCount})</span></div>
+          <div class="product-card__body">
+            <div class="product-card__category">${catName}</div>
+            <h3 class="product-card__name">${name}</h3>
+            ${shortDesc ? `<p class="product-card__benefit">${shortDesc}</p>` : ''}
+            <div class="product-card__rating">
+              ${stars}
+              ${reviewCount ? `<span class="product-card__rating-count">(${reviewCount.toLocaleString()})</span>` : `<span class="product-card__rating-count">${rating}</span>`}
             </div>
+            ${priceHtml}
+          </div>
 
-            <!-- Name -->
-            <h3 class="mrt-card-name">${name}</h3>
-
-            <!-- Desc -->
-            <p class="mrt-card-desc">${shortDesc}</p>
-
-            <!-- Price -->
-            <div class="mrt-price-row">
-              <span class="mrt-price">$${price}</span>
-              <span class="mrt-old-price">$${oldPrice}</span>
-              <span class="mrt-save-pill">Save 29%</span>
-            </div>
-
-            <!-- ── ACTION BUTTONS ─────────────────── -->
-            <div class="mrt-card-actions">
-              <a
-                href="${affiliateUrl}"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="mrt-btn-buy"
-                data-buy-btn>
-                <span class="mso" style="font-size:16px">shopping_cart</span>
-                Buy Now
-              </a>
-
-              <button
-                class="mrt-btn-qv"
-                data-qv-btn
-                data-id="${productId}">
-                <span class="mso" style="font-size:18px">zoom_in</span>
-              </button>
-            </div>
+          <div class="product-card__actions">
+            <a href="${affiliateUrl}"
+               target="_blank"
+               rel="noopener noreferrer"
+               class="product-card__btn-amazon"
+               data-id="${productId}">
+              <span class="material-symbols-outlined">shopping_cart</span>
+              <span class="btn-text">Buy Now</span>
+            </a>
+            <button class="product-card__btn-quickview"
+                    data-qv-btn
+                    data-id="${productId}">
+              <span class="material-symbols-outlined">visibility</span>
+              <span class="btn-text">Quick View</span>
+            </button>
           </div>
         </article>
       `;
     } catch (err) {
-      console.error('[MRT] createProductCard error:', err);
+      console.error('Error creating product card:', err);
       return '';
     }
   }
+
+
 
 
 

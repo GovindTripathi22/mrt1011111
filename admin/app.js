@@ -1,25 +1,38 @@
 const API = '/api';
 let token = localStorage.getItem('mrt_admin_token');
 let currentView = 'dashboard';
- 
-// === API Helper (ENHANCED: Surgical Cache-Busting) ===
+
+// === API Helper (FIXED: Handles 204 No Content for DELETE) ===
 async function api(path, opts = {}) {
   const headers = { 'Content-Type': 'application/json' };
   if (token) headers['Authorization'] = `Bearer ${token}`;
- 
+
   let finalPath = path;
- 
-  // Only cache-bust highly dynamic routes (products, categories, stats, reviews)
   const needsCacheBust = path.includes('/products') || path.includes('/categories') || path.includes('/stats') || path.includes('/reviews');
- 
+
   if ((!opts.method || opts.method === 'GET') && needsCacheBust) {
     finalPath += (path.includes('?') ? '&' : '?') + `_t=${Date.now()}`;
   }
- 
+
   try {
     const res = await fetch(`${API}${finalPath}`, { ...opts, headers });
     if (res.status === 401) { logout(); return null; }
-    const data = await res.json();
+
+    // CRITICAL FIX: Handle empty responses (204 No Content, typical for DELETE)
+    if (res.status === 204) return { success: true };
+    const contentLength = res.headers.get('content-length');
+    if (contentLength === '0') return res.ok ? { success: true } : { error: 'Request failed' };
+
+    const text = await res.text();
+    if (!text || text.trim() === '') return res.ok ? { success: true } : { error: 'Empty response' };
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      return res.ok ? { success: true } : { error: text };
+    }
+
     if (!res.ok) {
       console.error(`API Error [${res.status}]:`, data);
       return data;
@@ -30,36 +43,37 @@ async function api(path, opts = {}) {
     return { error: 'Network or parse error' };
   }
 }
- 
+
 function toast(msg, type = 'success') {
+  // Remove existing toasts
+  document.querySelectorAll('.toast').forEach(t => t.remove());
   const el = document.createElement('div');
   el.className = `toast ${type}`;
   el.innerHTML = `<span class="material-symbols-outlined">${type === 'success' ? 'check_circle' : 'error'}</span> ${msg}`;
   document.body.appendChild(el);
-  setTimeout(() => el.remove(), 3000);
+  setTimeout(() => el.remove(), 3200);
 }
- 
+
 // === Router ===
 function navigate(view) {
   currentView = view;
   render();
 }
- 
+
 function logout() {
   token = null;
   localStorage.removeItem('mrt_admin_token');
   render();
 }
- 
+
 // === Main Render ===
 function render() {
   const app = document.getElementById('app');
-  if (!app) return;
   if (!token) { renderLogin(app); return; }
   renderLayout(app);
 }
 
-// === Login (ENHANCED: Removed Hardcoded Test Credentials) ===
+// === Login ===
 function renderLogin(app) {
   app.innerHTML = `
     <div class="login-container">
@@ -69,11 +83,11 @@ function renderLogin(app) {
         <form id="login-form">
           <div class="form-group">
             <label>Email</label>
-            <input type="email" id="login-email" placeholder="admin@example.com" required>
+            <input type="email" id="login-email" placeholder="admin@example.com" required autocomplete="email">
           </div>
           <div class="form-group">
             <label>Password</label>
-            <input type="password" id="login-password" placeholder="••••••••" required>
+            <input type="password" id="login-password" placeholder="••••••••" required autocomplete="current-password">
           </div>
           <button type="submit" class="btn btn-primary" style="width:100%;justify-content:center;padding:0.875rem;">
             <span class="material-symbols-outlined">login</span> Sign In
@@ -86,6 +100,9 @@ function renderLogin(app) {
     e.preventDefault();
     const email = document.getElementById('login-email').value;
     const password = document.getElementById('login-password').value;
+    const btn = e.target.querySelector('button[type="submit"]');
+    btn.disabled = true;
+    btn.innerHTML = '<div class="loading-spinner"></div>';
     try {
       const data = await api('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) });
       if (data?.token) {
@@ -95,11 +112,17 @@ function renderLogin(app) {
         render();
       } else {
         toast(data?.error || 'Login failed', 'error');
+        btn.disabled = false;
+        btn.innerHTML = '<span class="material-symbols-outlined">login</span> Sign In';
       }
-    } catch { toast('Connection error', 'error'); }
+    } catch {
+      toast('Connection error', 'error');
+      btn.disabled = false;
+      btn.innerHTML = '<span class="material-symbols-outlined">login</span> Sign In';
+    }
   });
 }
- 
+
 // === Layout ===
 function renderLayout(app) {
   if (app.querySelector('.admin-layout')) {
@@ -107,13 +130,13 @@ function renderLayout(app) {
     renderView();
     return;
   }
- 
+
   app.innerHTML = `
     <div class="admin-layout">
-      <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Toggle navigation">
+      <div class="sidebar-overlay" id="sidebar-overlay"></div>
+      <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Toggle Menu">
         <span class="material-symbols-outlined">menu</span>
       </button>
-      <div class="sidebar-backdrop" id="sidebar-backdrop"></div>
       <aside class="sidebar" id="sidebar-container"></aside>
       <main class="main-content" id="main-content"></main>
     </div>
@@ -122,15 +145,24 @@ function renderLayout(app) {
   renderView();
 
   const toggle = document.getElementById('mobile-nav-toggle');
+  const overlay = document.getElementById('sidebar-overlay');
   const sidebar = document.getElementById('sidebar-container');
-  const backdrop = document.getElementById('sidebar-backdrop');
-  function openSidebar() { sidebar.classList.add('open'); backdrop.classList.add('active'); document.body.style.overflow = 'hidden'; }
-  function closeSidebar() { sidebar.classList.remove('open'); backdrop.classList.remove('active'); document.body.style.overflow = ''; }
-  if (toggle) toggle.addEventListener('click', () => sidebar.classList.contains('open') ? closeSidebar() : openSidebar());
-  if (backdrop) backdrop.addEventListener('click', closeSidebar);
-  document.addEventListener('click', (e) => { if (e.target.closest('.nav-item') && window.innerWidth <= 768) closeSidebar(); });
+
+  if (toggle) {
+    toggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('active');
+    });
+  }
+
+  if (overlay) {
+    overlay.addEventListener('click', () => {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('active');
+    });
+  }
 }
- 
+
 function updateSidebar() {
   const container = document.getElementById('sidebar-container');
   if (!container) return;
@@ -178,22 +210,23 @@ function updateSidebar() {
       </a>
     </div>
   `;
- 
+
   container.querySelectorAll('.nav-item[data-view]').forEach(el => {
     el.addEventListener('click', () => {
       const view = el.dataset.view;
       if (view === 'logout') { logout(); return; }
       navigate(view);
       container.classList.remove('open');
+      const overlay = document.getElementById('sidebar-overlay');
+      if (overlay) overlay.classList.remove('active');
     });
   });
 }
- 
+
 async function renderView() {
   const main = document.getElementById('main-content');
   if (!main) return;
- 
-  // Ensure we have containers for each view
+
   let viewContainer = document.getElementById(`view-${currentView}`);
   if (!viewContainer) {
     viewContainer = document.createElement('div');
@@ -201,12 +234,11 @@ async function renderView() {
     viewContainer.className = 'view-container';
     main.appendChild(viewContainer);
   }
- 
-  // Hide all other views
+
   document.querySelectorAll('.view-container').forEach(el => el.style.display = 'none');
   viewContainer.style.display = 'block';
   viewContainer.innerHTML = '<div class="text-center mt-2"><div class="loading-spinner"></div></div>';
- 
+
   switch (currentView) {
     case 'dashboard': await renderDashboard(viewContainer); break;
     case 'products': await renderProducts(viewContainer); break;
@@ -218,85 +250,75 @@ async function renderView() {
     default: await renderDashboard(viewContainer);
   }
 }
- 
+
 // === Dashboard ===
 async function renderDashboard(main) {
-  // Show skeleton instantly so admin feels fast
-  main.innerHTML = `
-    <div class="page-header">
-      <div><h2>Dashboard</h2><div class="subtitle">MRT International Admin Panel</div></div>
-    </div>
-    <div class="stats-grid" id="stats-grid-container">
-      ${['Total Products','Categories','Affiliate Clicks','Subscribers','Testimonials'].map(label => `
-        <div class="stat-card" style="opacity:0.5">
-          <div class="stat-label">${label}</div>
-          <div class="stat-value" style="color:var(--border)">—</div>
-        </div>`).join('')}
-    </div>
-    <div class="table-container" id="activity-container">
-      <div style="text-align:center;padding:2rem;opacity:0.4">Loading activity...</div>
-    </div>
-  `;
-
   const stats = await api('/admin/stats');
   if (!stats) return;
 
-  // Update stats grid
-  document.getElementById('stats-grid-container').innerHTML = `
-    <div class="stat-card">
-      <div class="stat-icon"><span class="material-symbols-outlined">inventory_2</span></div>
-      <div class="stat-label">Total Products</div>
-      <div class="stat-value">${stats.productCount || 0}</div>
+  main.innerHTML = `
+    <div class="page-header">
+      <div><h2>Dashboard</h2><div class="subtitle">Welcome to MRT International Admin</div></div>
     </div>
-    <div class="stat-card">
-      <div class="stat-icon"><span class="material-symbols-outlined">category</span></div>
-      <div class="stat-label">Categories</div>
-      <div class="stat-value">${stats.categoryCount || 0}</div>
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon"><span class="material-symbols-outlined">inventory_2</span></div>
+        <div class="stat-label">Total Products</div>
+        <div class="stat-value">${stats.productCount || 0}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><span class="material-symbols-outlined">category</span></div>
+        <div class="stat-label">Categories</div>
+        <div class="stat-value">${stats.categoryCount || 0}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><span class="material-symbols-outlined">ads_click</span></div>
+        <div class="stat-label">Affiliate Clicks</div>
+        <div class="stat-value">${stats.clickCount || 0}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><span class="material-symbols-outlined">mail</span></div>
+        <div class="stat-label">Subscribers</div>
+        <div class="stat-value">${stats.subscriberCount || 0}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon"><span class="material-symbols-outlined">reviews</span></div>
+        <div class="stat-label">Testimonials</div>
+        <div class="stat-value">${stats.testimonialCount || 0}</div>
+      </div>
     </div>
-    <div class="stat-card">
-      <div class="stat-icon"><span class="material-symbols-outlined">ads_click</span></div>
-      <div class="stat-label">Affiliate Clicks</div>
-      <div class="stat-value">${stats.clickCount || 0}</div>
+    <div class="table-container">
+      <div class="table-header">
+        <h3>Recent Activity</h3>
+      </div>
+      <table>
+        <thead><tr><th>Product</th><th>Event</th><th>Time</th></tr></thead>
+        <tbody>
+          ${(stats.recentClicks || []).map(c => `
+            <tr>
+              <td>
+                <div class="flex gap-1" style="align-items:center">
+                  <img src="${c.product?.image || ''}" class="product-thumb" alt="">
+                  <span>${c.product?.name || 'Unknown'}</span>
+                </div>
+              </td>
+              <td><span class="badge badge-info">Affiliate Click</span></td>
+              <td class="text-muted text-sm">${new Date(c.createdAt).toLocaleString()}</td>
+            </tr>
+          `).join('') || '<tr><td colspan="3" class="text-center text-muted" style="padding:2rem">No recent activity</td></tr>'}
+        </tbody>
+      </table>
     </div>
-    <div class="stat-card">
-      <div class="stat-icon"><span class="material-symbols-outlined">mail</span></div>
-      <div class="stat-label">Subscribers</div>
-      <div class="stat-value">${stats.subscriberCount || 0}</div>
-    </div>
-    <div class="stat-card">
-      <div class="stat-icon"><span class="material-symbols-outlined">reviews</span></div>
-      <div class="stat-label">Testimonials</div>
-      <div class="stat-value">${stats.testimonialCount || 0}</div>
-    </div>
-  `;
-
-  document.getElementById('activity-container').innerHTML = `
-    <div class="table-header"><h3>Recent Activity</h3></div>
-    <table>
-      <thead><tr><th>Product</th><th>Event</th><th>Time</th></tr></thead>
-      <tbody>
-        ${(stats.recentClicks || []).map(c => `
-          <tr>
-            <td class="flex gap-1" style="align-items:center">
-              <img src="${c.product?.image || ''}" class="product-thumb" alt="">
-              <span>${c.product?.name || 'Unknown'}</span>
-            </td>
-            <td><span class="badge badge-info">Affiliate Click</span></td>
-            <td class="text-muted text-sm">${new Date(c.clickedAt || c.createdAt).toLocaleString()}</td>
-          </tr>
-        `).join('') || '<tr><td colspan="3" class="text-center text-muted" style="padding:2rem">No recent activity</td></tr>'}
-      </tbody>
-    </table>
   `;
 }
- 
+
 // === Products ===
 async function renderProducts(main) {
   const data = await api('/products');
   const cats = await api('/categories');
   if (!data) return;
   const products = data.products || [];
- 
+
   main.innerHTML = `
     <div class="page-header">
       <div><h2>Products</h2><div class="subtitle">${data.total || 0} products total</div></div>
@@ -304,19 +326,34 @@ async function renderProducts(main) {
     </div>
     <div class="table-container">
       <table>
-        <thead><tr><th></th><th>Name</th><th>Category</th><th>Price</th><th>Badge</th><th>Rating</th><th>Actions</th></tr></thead>
+        <thead><tr><th></th><th>Name</th><th class="hide-xs">Category</th><th class="hide-xs">Price</th><th class="hide-sm">Badge</th><th class="hide-sm">Rating</th><th>Actions</th></tr></thead>
         <tbody>
           ${products.map(p => `
             <tr>
-              <td><img src="${p.image || ''}" class="product-thumb" alt="${p.name}"></td>
-              <td><strong>${p.name}</strong><br><span class="text-muted text-sm">${p.slug}</span></td>
-              <td><span class="badge badge-info">${p.category?.name || p.categoryId}</span></td>
-              <td>$${p.price}</td>
-              <td><span class="badge badge-warning">${p.badge || '-'}</span></td>
-              <td>${p.ratingValue || '-'}</td>
+              <td><img src="${p.image || ''}" class="product-thumb" alt="${p.name}" onerror="this.style.opacity='0.2'"></td>
               <td>
-                <button class="btn btn-sm btn-secondary btn-edit-product" data-id="${p.id}"><span class="material-symbols-outlined">edit</span></button>
-                <button class="btn btn-sm btn-danger btn-delete-product" data-id="${p.id}"><span class="material-symbols-outlined">delete</span></button>
+                <strong>${p.name}</strong>
+                <br><span class="text-muted text-sm">${p.slug}</span>
+                <div class="mobile-meta hide-desktop">
+                  <span class="badge badge-info" style="margin-right:4px">${p.category?.name || p.categoryId}</span>
+                  <span style="font-size:0.8rem;color:var(--accent)">$${p.price}</span>
+                </div>
+              </td>
+              <td class="hide-xs"><span class="badge badge-info">${p.category?.name || p.categoryId}</span></td>
+              <td class="hide-xs">
+                ${p.price
+                  ? `<span style="font-weight:700">${({USD:'$',INR:'₹',AED:'د.إ',EUR:'€',GBP:'£',SAR:'﷼',JPY:'¥',CAD:'CA$',AUD:'A$',SGD:'S$'}[p.currency]||'$')}${p.price}</span>
+                     ${p.originalPrice && p.originalPrice > p.price ? `<br><span style="font-size:0.75rem;text-decoration:line-through;opacity:0.45">${({USD:'$',INR:'₹',AED:'د.إ',EUR:'€',GBP:'£',SAR:'﷼',JPY:'¥',CAD:'CA$',AUD:'A$',SGD:'S$'}[p.currency]||'$')}${p.originalPrice}</span>` : ''}`
+                  : '<span style="opacity:0.5;font-size:0.8rem">Ask for price</span>'
+                }
+              </td>
+              <td class="hide-sm"><span class="badge badge-warning">${p.badge || '-'}</span></td>
+              <td class="hide-sm">${p.ratingValue || '-'}</td>
+              <td>
+                <div class="action-btns">
+                  <button class="btn btn-sm btn-secondary btn-edit-product" data-id="${p.id}" title="Edit"><span class="material-symbols-outlined">edit</span></button>
+                  <button class="btn btn-sm btn-danger btn-delete-product" data-id="${p.id}" title="Delete"><span class="material-symbols-outlined">delete</span></button>
+                </div>
               </td>
             </tr>
           `).join('')}
@@ -324,38 +361,86 @@ async function renderProducts(main) {
       </table>
     </div>
   `;
- 
+
   document.getElementById('btn-add-product')?.addEventListener('click', () => showProductModal(null, cats));
+
   document.querySelectorAll('.btn-edit-product').forEach(b => b.addEventListener('click', () => {
     const p = products.find(x => String(x.id) === String(b.dataset.id));
     if (p) showProductModal(p, cats);
   }));
+
+  // FIXED: Delete now works properly with error handling
   document.querySelectorAll('.btn-delete-product').forEach(b => b.addEventListener('click', async () => {
-    if (!confirm('Delete this product?')) return;
-    await api(`/products/${b.dataset.id}`, { method: 'DELETE' });
+    if (!confirm('Delete this product? This cannot be undone.')) return;
+    const productId = b.dataset.id;
+    b.disabled = true;
+    b.innerHTML = '<div class="loading-spinner" style="width:14px;height:14px"></div>';
+    const res = await api(`/products/${productId}`, { method: 'DELETE' });
+    if (res?.error) {
+      toast('Delete failed: ' + res.error, 'error');
+      b.disabled = false;
+      b.innerHTML = '<span class="material-symbols-outlined">delete</span>';
+      return;
+    }
     toast('Product deleted');
-    renderView();
+    await renderView();
   }));
 }
- 
+
 function showProductModal(product, categories) {
   const isEdit = !!product;
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
     <div class="modal">
-      <h3>${isEdit ? 'Edit Product' : 'Add Product'}</h3>
+      <div class="modal-header">
+        <h3>${isEdit ? 'Edit Product' : 'Add Product'}</h3>
+        <button class="modal-close-btn" id="modal-close-x" type="button">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
       <form id="product-form">
+        <div class="form-group">
+          <label>Name</label>
+          <input type="text" name="name" value="${product?.name || ''}" required placeholder="Product name">
+        </div>
+
+        <!-- PRICING SECTION -->
+        <h4 class="section-divider">Pricing & Currency</h4>
         <div class="grid-2">
           <div class="form-group">
-            <label>Name</label>
-            <input type="text" name="name" value="${product?.name || ''}" required>
+            <label>Currency</label>
+            <select name="currency">
+              <option value="USD" ${(product?.currency||'USD')==='USD'?'selected':''}>$ USD — US Dollar</option>
+              <option value="INR" ${product?.currency==='INR'?'selected':''}>₹ INR — Indian Rupee</option>
+              <option value="AED" ${product?.currency==='AED'?'selected':''}>د.إ AED — UAE Dirham</option>
+              <option value="EUR" ${product?.currency==='EUR'?'selected':''}>€ EUR — Euro</option>
+              <option value="GBP" ${product?.currency==='GBP'?'selected':''}>£ GBP — British Pound</option>
+              <option value="SAR" ${product?.currency==='SAR'?'selected':''}>﷼ SAR — Saudi Riyal</option>
+              <option value="JPY" ${product?.currency==='JPY'?'selected':''}>¥ JPY — Japanese Yen</option>
+              <option value="CAD" ${product?.currency==='CAD'?'selected':''}>CA$ CAD — Canadian Dollar</option>
+              <option value="AUD" ${product?.currency==='AUD'?'selected':''}>A$ AUD — Australian Dollar</option>
+              <option value="SGD" ${product?.currency==='SGD'?'selected':''}>S$ SGD — Singapore Dollar</option>
+            </select>
           </div>
           <div class="form-group">
-            <label>Price</label>
-            <input type="number" name="price" value="${product?.price || ''}" step="0.01" required>
+            <label>Sale Price <span style="opacity:0.5;font-weight:400">(leave blank = "Ask for price")</span></label>
+            <input type="number" name="price" value="${product?.price || ''}" step="0.01" min="0" placeholder="0.00" id="sale-price-input">
           </div>
         </div>
+        <div class="grid-2">
+          <div class="form-group">
+            <label>Original Price <span style="opacity:0.5;font-weight:400">(for discount — optional)</span></label>
+            <input type="number" name="originalPrice" value="${product?.originalPrice || ''}" step="0.01" min="0" placeholder="Higher original price" id="original-price-input">
+          </div>
+          <div class="form-group">
+            <label>Discount Preview</label>
+            <div id="discount-preview" style="padding:0.75rem 1rem;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-md);font-size:0.875rem;color:var(--text-secondary);min-height:44px;display:flex;align-items:center">
+              —
+            </div>
+          </div>
+        </div>
+
         <div class="grid-2">
           <div class="form-group">
             <label>Category</label>
@@ -376,100 +461,155 @@ function showProductModal(product, categories) {
         </div>
         <div class="form-group">
           <label>Short Benefit</label>
-          <input type="text" name="shortBenefit" value="${product?.shortBenefit || ''}">
+          <input type="text" name="shortBenefit" value="${product?.shortBenefit || ''}" placeholder="One-line selling point">
         </div>
+
+        <!-- ENHANCED IMAGE SECTION with URL Fetch + Upload -->
         <div class="form-group">
-          <label>Image & Media</label>
-          <div class="flex gap-4 items-end">
-            <div class="flex-1">
-              <input type="text" name="image" id="product-image-path" value="${product?.image || ''}" placeholder="/assets/uploads/image.jpg">
+          <label>Image</label>
+          <div class="image-section">
+            <div class="image-url-row">
+              <input type="text" name="image" id="product-image-path" value="${product?.image || ''}" placeholder="https://example.com/image.jpg or /assets/uploads/image.jpg">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-fetch-image" title="Preview image from URL">
+                <span class="material-symbols-outlined">preview</span>
+                <span class="btn-label">Preview</span>
+              </button>
             </div>
-            <div id="product-dropzone" class="dropzone">
+            <div id="image-preview-wrap" style="display:none;margin:0.5rem 0;">
+              <img id="preview-img" style="max-height:90px;max-width:180px;border-radius:8px;border:1px solid var(--border);object-fit:contain;background:var(--bg-secondary);" alt="Preview">
+            </div>
+            <div id="product-dropzone" class="dropzone dropzone-wide">
               <span class="material-symbols-outlined">upload_file</span>
-              <span>Upload</span>
+              <span>Or drag &amp; drop / click to upload a file</span>
             </div>
           </div>
         </div>
+
         <div class="grid-2">
           <div class="form-group">
             <label>Affiliate URL</label>
-            <input type="url" name="affiliateUrl" value="${product?.affiliateUrl || ''}">
+            <input type="url" name="affiliateUrl" value="${product?.affiliateUrl || ''}" placeholder="https://amazon.com/...">
           </div>
- 
-        </div>
-        <div class="grid-2">
- 
           <div class="form-group">
             <label>Rating Value</label>
-            <input type="number" name="ratingValue" value="${product?.ratingValue || ''}" step="0.1" max="5">
+            <input type="number" name="ratingValue" value="${product?.ratingValue || ''}" step="0.1" max="5" placeholder="4.8">
           </div>
         </div>
         <div class="form-group">
           <label>Key Benefits (one per line)</label>
-          <textarea name="keyBenefits">${(product?.keyBenefits || []).join('\n')}</textarea>
+          <textarea name="keyBenefits" placeholder="Fast charging&#10;Compact design&#10;Universal compatibility">${(product?.keyBenefits || []).join('\n')}</textarea>
         </div>
- 
-        <div class="grid-2">
-          <div class="form-group">
-            <label>Sort Order</label>
-            <input type="number" name="sortOrder" value="${product?.sortOrder || 0}" min="0">
-          </div>
-          <div class="form-group" style="display:flex;align-items:center;gap:0.75rem;padding-top:1.5rem;">
-            <input type="checkbox" name="isActive" id="isActive-check" value="true" ${(!product || product?.isActive !== false) ? 'checked' : ''} style="width:18px;height:18px;accent-color:var(--accent);cursor:pointer;">
-            <label for="isActive-check" style="margin:0;font-size:0.875rem;cursor:pointer;">Active (visible on site)</label>
-          </div>
-        </div>
-        <div class="form-group">
-          <label>Description</label>
-          <textarea name="description" rows="3">${product?.description || ''}</textarea>
-        </div>
+
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="modal-cancel">Cancel</button>
-          <button type="submit" class="btn btn-primary">${isEdit ? 'Update' : 'Create'} Product</button>
+          <button type="submit" class="btn btn-primary" id="modal-submit">
+            <span class="material-symbols-outlined">${isEdit ? 'save' : 'add_circle'}</span>
+            ${isEdit ? 'Update' : 'Create'} Product
+          </button>
         </div>
       </form>
     </div>
   `;
   document.body.appendChild(overlay);
+
   overlay.querySelector('#modal-cancel').addEventListener('click', () => overlay.remove());
+  overlay.querySelector('#modal-close-x').addEventListener('click', () => overlay.remove());
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
- 
-  const dropzone = overlay.querySelector('#product-dropzone');
+
+  // Fetch/Preview image from URL
   const imgInput = overlay.querySelector('#product-image-path');
-  initDragAndDrop(dropzone, (url) => {
-      imgInput.value = url;
-      toast('Image uploaded successfully');
+  const previewWrap = overlay.querySelector('#image-preview-wrap');
+  const previewImg = overlay.querySelector('#preview-img');
+
+  overlay.querySelector('#btn-fetch-image').addEventListener('click', () => {
+    const url = imgInput.value.trim();
+    if (!url) { toast('Enter an image URL first', 'error'); return; }
+    previewImg.src = url;
+    previewImg.onerror = () => {
+      toast('Could not load image — check URL or CORS policy', 'error');
+      previewWrap.style.display = 'none';
+    };
+    previewImg.onload = () => {
+      previewWrap.style.display = 'block';
+      toast('Image preview loaded');
+    };
   });
- 
+
+  // Auto-preview if value already exists on edit
+  if (product?.image) {
+    previewImg.src = product.image;
+    previewImg.onload = () => { previewWrap.style.display = 'block'; };
+  }
+
+  // Drag & Drop upload
+  const dropzone = overlay.querySelector('#product-dropzone');
+  initDragAndDrop(dropzone, (url) => {
+    imgInput.value = url;
+    previewImg.src = url;
+    previewImg.onload = () => { previewWrap.style.display = 'block'; };
+    toast('Image uploaded successfully');
+  });
+
+  // ── Live Discount Preview ─────────────────────────────────────────
+  const salePriceInput    = overlay.querySelector('#sale-price-input');
+  const originalPriceInput = overlay.querySelector('#original-price-input');
+  const discountPreview   = overlay.querySelector('#discount-preview');
+
+  function updateDiscountPreview() {
+    const sale = parseFloat(salePriceInput?.value) || 0;
+    const orig = parseFloat(originalPriceInput?.value) || 0;
+    if (!discountPreview) return;
+    if (sale > 0 && orig > sale) {
+      const pct = Math.round((1 - sale / orig) * 100);
+      discountPreview.innerHTML = `<span style="color:var(--success);font-weight:700;font-size:1rem">${pct}% OFF</span>&nbsp;<span style="color:var(--text-muted)">· Save ${(orig - sale).toFixed(2)}</span>`;
+    } else if (sale > 0 && orig > 0 && orig <= sale) {
+      discountPreview.innerHTML = `<span style="color:var(--warning)">Original price must be higher than sale price</span>`;
+    } else if (sale === 0) {
+      discountPreview.innerHTML = `<span style="color:var(--accent)">"Ask for price" card shown to visitors</span>`;
+    } else {
+      discountPreview.innerHTML = `<span style="color:var(--text-muted)">Set Original Price above to show discount</span>`;
+    }
+  }
+
+  salePriceInput?.addEventListener('input', updateDiscountPreview);
+  originalPriceInput?.addEventListener('input', updateDiscountPreview);
+  updateDiscountPreview(); // run on open
+
   overlay.querySelector('#product-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const submitBtn = overlay.querySelector('#modal-submit');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<div class="loading-spinner" style="width:16px;height:16px"></div> Saving...';
+
     const fd = new FormData(e.target);
     const body = Object.fromEntries(fd.entries());
-    body.keyBenefits = (body.keyBenefits || '').split('\n').filter(Boolean);
-    body.price = parseFloat(body.price) || 0;
-    body.ratingValue = parseFloat(body.ratingValue) || 5.0;
-    body.sortOrder = parseInt(body.sortOrder) || 0;
-    body.isActive = body.isActive === 'true'; // checkbox: only present when checked
- 
+    body.keyBenefits = body.keyBenefits.split('\n').filter(Boolean);
+    body.price        = body.price ? parseFloat(body.price) : null;
+    body.originalPrice = body.originalPrice ? parseFloat(body.originalPrice) : null;
+    body.ratingValue  = parseFloat(body.ratingValue) || 0;
+    body.currency     = body.currency || 'USD';
+
+    let res;
     if (isEdit) {
-      const res = await api(`/products/${product.id}`, { method: 'PUT', body: JSON.stringify(body) });
-      if (res?.error) { toast(res.error, 'error'); return; }
+      res = await api(`/products/${product.id}`, { method: 'PUT', body: JSON.stringify(body) });
+      if (res?.error) { toast(res.error, 'error'); submitBtn.disabled = false; submitBtn.innerHTML = '<span class="material-symbols-outlined">save</span> Update Product'; return; }
       toast('Product updated');
     } else {
-      const res = await api('/products', { method: 'POST', body: JSON.stringify(body) });
-      if (res?.error) { toast(res.error, 'error'); return; }
+      res = await api('/products', { method: 'POST', body: JSON.stringify(body) });
+      if (res?.error) { toast(res.error, 'error'); submitBtn.disabled = false; submitBtn.innerHTML = '<span class="material-symbols-outlined">add_circle</span> Create Product'; return; }
       toast('Product created');
     }
     overlay.remove();
-    setTimeout(() => renderView(), 100); // Small delay to allow DB sync/refresh UI
+    setTimeout(() => renderView(), 100);
   });
 }
- 
+
+
 // === Categories ===
 async function renderCategories(main) {
   const cats = await api('/categories');
   if (!cats) return;
- 
+
   main.innerHTML = `
     <div class="page-header">
       <div><h2>Categories</h2><div class="subtitle">${cats.length} categories</div></div>
@@ -477,17 +617,19 @@ async function renderCategories(main) {
     </div>
     <div class="table-container">
       <table>
-        <thead><tr><th>Name</th><th>Slug</th><th>Products</th><th>Theme</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Name</th><th class="hide-xs">Slug</th><th>Products</th><th class="hide-sm">Theme</th><th>Actions</th></tr></thead>
         <tbody>
           ${cats.map(c => `
             <tr>
               <td><strong>${c.name}</strong></td>
-              <td class="text-muted">${c.slug}</td>
+              <td class="text-muted hide-xs">${c.slug}</td>
               <td><span class="badge badge-info">${c._count?.products || 0}</span></td>
-              <td><span style="display:inline-block;width:20px;height:20px;border-radius:50%;background:${c.theme?.primary || '#999'}"></span></td>
+              <td class="hide-sm"><span style="display:inline-block;width:20px;height:20px;border-radius:50%;background:${c.theme?.primary || '#999'};vertical-align:middle"></span></td>
               <td>
-                <button class="btn btn-sm btn-secondary btn-edit-cat" data-id="${c.id}"><span class="material-symbols-outlined">edit</span></button>
-                <button class="btn btn-sm btn-danger btn-delete-cat" data-id="${c.id}"><span class="material-symbols-outlined">delete</span></button>
+                <div class="action-btns">
+                  <button class="btn btn-sm btn-secondary btn-edit-cat" data-id="${c.id}" title="Edit"><span class="material-symbols-outlined">edit</span></button>
+                  <button class="btn btn-sm btn-danger btn-delete-cat" data-id="${c.id}" title="Delete"><span class="material-symbols-outlined">delete</span></button>
+                </div>
               </td>
             </tr>
           `).join('')}
@@ -495,75 +637,117 @@ async function renderCategories(main) {
       </table>
     </div>
   `;
- 
+
   document.getElementById('btn-add-cat')?.addEventListener('click', () => showCategoryModal(null));
   document.querySelectorAll('.btn-edit-cat').forEach(b => b.addEventListener('click', () => {
     const c = cats.find(x => String(x.id) === String(b.dataset.id));
     if (c) showCategoryModal(c);
   }));
+
+  // FIXED: Category delete with proper error handling
   document.querySelectorAll('.btn-delete-cat').forEach(b => b.addEventListener('click', async () => {
-    if (!confirm('Delete this category?')) return;
-    await api(`/categories/${b.dataset.id}`, { method: 'DELETE' });
+    if (!confirm('Delete this category? This will also remove all associated products.')) return;
+    const catId = b.dataset.id;
+    b.disabled = true;
+    b.innerHTML = '<div class="loading-spinner" style="width:14px;height:14px"></div>';
+    const res = await api(`/categories/${catId}`, { method: 'DELETE' });
+    if (res?.error) {
+      toast('Delete failed: ' + res.error, 'error');
+      b.disabled = false;
+      b.innerHTML = '<span class="material-symbols-outlined">delete</span>';
+      return;
+    }
     toast('Category deleted');
-    renderView();
+    await renderView();
   }));
 }
- 
+
 function showCategoryModal(cat) {
   const isEdit = !!cat;
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
     <div class="modal">
-      <h3>${isEdit ? 'Edit Category' : 'Add Category'}</h3>
+      <div class="modal-header">
+        <h3>${isEdit ? 'Edit Category' : 'Add Category'}</h3>
+        <button class="modal-close-btn" id="modal-close-x" type="button">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
       <form id="cat-form">
         <div class="grid-2">
-          <div class="form-group"><label>Name</label><input type="text" name="name" value="${cat?.name || ''}" required></div>
-          <div class="form-group"><label>Slug</label><input type="text" name="slug" value="${cat?.slug || ''}"></div>
+          <div class="form-group"><label>Name</label><input type="text" name="name" value="${cat?.name || ''}" required placeholder="Category name"></div>
+          <div class="form-group"><label>Slug</label><input type="text" name="slug" value="${cat?.slug || ''}" placeholder="auto-generated"></div>
         </div>
         <div class="form-group">
           <label>Image & Media</label>
-          <div class="flex gap-4 items-end">
-            <div class="flex-1">
-              <input type="text" name="image" id="cat-image-path" value="${cat?.image || ''}" placeholder="/assets/uploads/image.jpg">
+          <div class="image-section">
+            <div class="image-url-row">
+              <input type="text" name="image" id="cat-image-path" value="${cat?.image || ''}" placeholder="https://example.com/image.jpg or /assets/uploads/image.jpg">
+              <button type="button" class="btn btn-secondary btn-sm" id="btn-fetch-cat-image" title="Preview image from URL">
+                <span class="material-symbols-outlined">preview</span>
+                <span class="btn-label">Preview</span>
+              </button>
             </div>
-            <div id="cat-dropzone" class="dropzone">
+            <div id="cat-image-preview-wrap" style="display:none;margin:0.5rem 0;">
+              <img id="cat-preview-img" style="max-height:80px;max-width:160px;border-radius:8px;border:1px solid var(--border);object-fit:contain;background:var(--bg-secondary);" alt="Preview">
+            </div>
+            <div id="cat-dropzone" class="dropzone dropzone-wide">
               <span class="material-symbols-outlined">upload_file</span>
-              <span>Upload</span>
+              <span>Or drag &amp; drop / click to upload</span>
             </div>
           </div>
         </div>
-        <div class="form-group"><label>Description</label><textarea name="description">${cat?.description || ''}</textarea></div>
-        <h4 style="margin:1rem 0 0.75rem;font-size:0.875rem;color:var(--accent)">Theme</h4>
+        <div class="form-group"><label>Description</label><textarea name="description" placeholder="Category description...">${cat?.description || ''}</textarea></div>
+        <h4 class="section-divider">Theme</h4>
         <div class="grid-2">
-          <div class="form-group"><label>Primary Color</label><input type="text" name="primary" value="${cat?.theme?.primary || '#914d00'}"></div>
-          <div class="form-group"><label>Secondary Color</label><input type="text" name="secondary" value="${cat?.theme?.secondary || '#f28c28'}"></div>
+          <div class="form-group"><label>Primary Color</label><input type="text" name="primary" value="${cat?.theme?.primary || '#914d00'}" placeholder="#914d00"></div>
+          <div class="form-group"><label>Secondary Color</label><input type="text" name="secondary" value="${cat?.theme?.secondary || '#f28c28'}" placeholder="#f28c28"></div>
         </div>
         <div class="grid-2">
-          <div class="form-group"><label>Theme Title</label><input type="text" name="title" value="${cat?.theme?.title || ''}"></div>
-          <div class="form-group"><label>Subtitle</label><input type="text" name="subtitle" value="${cat?.theme?.subtitle || ''}"></div>
+          <div class="form-group"><label>Theme Title</label><input type="text" name="title" value="${cat?.theme?.title || ''}" placeholder="Category title"></div>
+          <div class="form-group"><label>Subtitle</label><input type="text" name="subtitle" value="${cat?.theme?.subtitle || ''}" placeholder="Category subtitle"></div>
         </div>
-        <h4 style="margin:1rem 0 0.75rem;font-size:0.875rem;color:var(--accent)">SEO</h4>
+        <h4 class="section-divider">SEO</h4>
         <div class="form-group"><label>SEO Title</label><input type="text" name="seoTitle" value="${cat?.theme?.seoTitle || ''}"></div>
-        <div class="form-group"><label>SEO Intro</label><textarea name="seoIntro">${cat?.theme?.seoIntro || ''}</textarea></div>
+        <div class="form-group"><label>SEO Intro</label><textarea name="seoIntro" placeholder="SEO-friendly intro text...">${cat?.theme?.seoIntro || ''}</textarea></div>
         <div class="modal-actions">
           <button type="button" class="btn btn-secondary" id="modal-cancel">Cancel</button>
-          <button type="submit" class="btn btn-primary">${isEdit ? 'Update' : 'Create'}</button>
+          <button type="submit" class="btn btn-primary">${isEdit ? 'Update' : 'Create'} Category</button>
         </div>
       </form>
     </div>
   `;
   document.body.appendChild(overlay);
   overlay.querySelector('#modal-cancel').addEventListener('click', () => overlay.remove());
+  overlay.querySelector('#modal-close-x').addEventListener('click', () => overlay.remove());
   overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
- 
-  const dropzone = overlay.querySelector('#cat-dropzone');
-  const imgInput = overlay.querySelector('#cat-image-path');
-  initDragAndDrop(dropzone, (url) => {
-      imgInput.value = url;
-      toast('Category image uploaded');
+
+  const catImgInput = overlay.querySelector('#cat-image-path');
+  const catPreviewWrap = overlay.querySelector('#cat-image-preview-wrap');
+  const catPreviewImg = overlay.querySelector('#cat-preview-img');
+
+  overlay.querySelector('#btn-fetch-cat-image').addEventListener('click', () => {
+    const url = catImgInput.value.trim();
+    if (!url) { toast('Enter an image URL first', 'error'); return; }
+    catPreviewImg.src = url;
+    catPreviewImg.onerror = () => { toast('Could not load image from URL', 'error'); catPreviewWrap.style.display = 'none'; };
+    catPreviewImg.onload = () => { catPreviewWrap.style.display = 'block'; toast('Image preview loaded'); };
   });
- 
+
+  if (cat?.image) {
+    catPreviewImg.src = cat.image;
+    catPreviewImg.onload = () => { catPreviewWrap.style.display = 'block'; };
+  }
+
+  const dropzone = overlay.querySelector('#cat-dropzone');
+  initDragAndDrop(dropzone, (url) => {
+    catImgInput.value = url;
+    catPreviewImg.src = url;
+    catPreviewImg.onload = () => { catPreviewWrap.style.display = 'block'; };
+    toast('Category image uploaded');
+  });
+
   overlay.querySelector('#cat-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = new FormData(e.target);
@@ -583,12 +767,12 @@ function showCategoryModal(cat) {
     renderView();
   });
 }
- 
+
 // === Testimonials ===
 async function renderTestimonials(main) {
   const items = await api('/testimonials');
   if (!items) return;
- 
+
   main.innerHTML = `
     <div class="page-header">
       <div><h2>Testimonials</h2><div class="subtitle">${items.length} reviews</div></div>
@@ -596,14 +780,14 @@ async function renderTestimonials(main) {
     </div>
     <div class="table-container">
       <table>
-        <thead><tr><th>Name</th><th>Location</th><th>Region</th><th>Text</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Name</th><th class="hide-xs">Location</th><th>Region</th><th class="hide-sm">Text</th><th>Actions</th></tr></thead>
         <tbody>
           ${items.map(t => `
             <tr>
               <td><strong>${t.name}</strong></td>
-              <td class="text-muted">${t.location}</td>
+              <td class="text-muted hide-xs">${t.location}</td>
               <td><span class="badge badge-info">${t.region.toUpperCase()}</span></td>
-              <td class="text-sm" style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.text}</td>
+              <td class="text-sm hide-sm" style="max-width:300px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${t.text}</td>
               <td><button class="btn btn-sm btn-danger btn-del-test" data-id="${t.id}"><span class="material-symbols-outlined">delete</span></button></td>
             </tr>
           `).join('')}
@@ -611,29 +795,33 @@ async function renderTestimonials(main) {
       </table>
     </div>
   `;
- 
+
   document.querySelectorAll('.btn-del-test').forEach(b => b.addEventListener('click', async () => {
     if (!confirm('Delete?')) return;
-    await api(`/testimonials/${b.dataset.id}`, { method: 'DELETE' });
+    const res = await api(`/testimonials/${b.dataset.id}`, { method: 'DELETE' });
+    if (res?.error) { toast('Delete failed', 'error'); return; }
     toast('Deleted'); renderView();
   }));
- 
+
   document.getElementById('btn-add-test')?.addEventListener('click', () => {
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay';
     overlay.innerHTML = `
       <div class="modal">
-        <h3>Add Testimonial</h3>
+        <div class="modal-header">
+          <h3>Add Testimonial</h3>
+          <button class="modal-close-btn" id="modal-close-x" type="button"><span class="material-symbols-outlined">close</span></button>
+        </div>
         <form id="test-form">
           <div class="grid-2">
-            <div class="form-group"><label>Name</label><input type="text" name="name" required></div>
-            <div class="form-group"><label>Location</label><input type="text" name="location" required></div>
+            <div class="form-group"><label>Name</label><input type="text" name="name" required placeholder="John Doe"></div>
+            <div class="form-group"><label>Location</label><input type="text" name="location" required placeholder="Dubai, UAE"></div>
           </div>
           <div class="grid-2">
             <div class="form-group"><label>Region</label><select name="region"><option value="us">US</option><option value="ae">UAE</option></select></div>
-            <div class="form-group"><label>Quote Title</label><input type="text" name="quote"></div>
+            <div class="form-group"><label>Quote Title</label><input type="text" name="quote" placeholder="Great product!"></div>
           </div>
-          <div class="form-group"><label>Review Text</label><textarea name="text" required></textarea></div>
+          <div class="form-group"><label>Review Text</label><textarea name="text" required placeholder="Customer's review text..."></textarea></div>
           <div class="modal-actions">
             <button type="button" class="btn btn-secondary" id="modal-cancel">Cancel</button>
             <button type="submit" class="btn btn-primary">Create</button>
@@ -643,6 +831,8 @@ async function renderTestimonials(main) {
     `;
     document.body.appendChild(overlay);
     overlay.querySelector('#modal-cancel').addEventListener('click', () => overlay.remove());
+    overlay.querySelector('#modal-close-x').addEventListener('click', () => overlay.remove());
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
     overlay.querySelector('#test-form').addEventListener('submit', async (e) => {
       e.preventDefault();
       const body = Object.fromEntries(new FormData(e.target).entries());
@@ -651,13 +841,47 @@ async function renderTestimonials(main) {
     });
   });
 }
- 
+
+// === Newsletter ===
+async function renderNewsletter(main) {
+  const data = await api('/newsletter/subscribers');
+  if (!data) return;
+  const subscribers = data.subscribers || data || [];
+
+  main.innerHTML = `
+    <div class="page-header">
+      <div><h2>Newsletter</h2><div class="subtitle">${subscribers.length} subscribers</div></div>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead><tr><th>Email</th><th class="hide-xs">Date</th><th>Actions</th></tr></thead>
+        <tbody>
+          ${subscribers.map(s => `
+            <tr>
+              <td>${s.email}</td>
+              <td class="text-muted text-sm hide-xs">${new Date(s.createdAt || s.date).toLocaleDateString()}</td>
+              <td><button class="btn btn-sm btn-danger btn-del-sub" data-id="${s.id}"><span class="material-symbols-outlined">delete</span></button></td>
+            </tr>
+          `).join('') || '<tr><td colspan="3" class="text-center text-muted" style="padding:2rem">No subscribers yet</td></tr>'}
+        </tbody>
+      </table>
+    </div>
+  `;
+
+  document.querySelectorAll('.btn-del-sub').forEach(b => b.addEventListener('click', async () => {
+    if (!confirm('Remove subscriber?')) return;
+    const res = await api(`/newsletter/subscribers/${b.dataset.id}`, { method: 'DELETE' });
+    if (res?.error) { toast('Remove failed', 'error'); return; }
+    toast('Subscriber removed'); renderView();
+  }));
+}
+
 // === Analytics ===
 async function renderAnalytics(main) {
   const data = await api('/admin/analytics');
   const stats = await api('/admin/stats');
   if (!data || !stats) return;
- 
+
   main.innerHTML = `
     <div class="page-header">
       <div><h2>Analytics</h2><div class="subtitle">Platform performance & engagement metrics</div></div>
@@ -679,32 +903,30 @@ async function renderAnalytics(main) {
         <div class="stat-value">${((stats.clickCount / (stats.productCount || 1)) * 100).toFixed(1)}%</div>
       </div>
     </div>
- 
-    <div class="analytics-row flex gap-6 mt-8">
-      <div class="stat-card flex-1">
-        <h3 class="font-headline mb-6" style="font-size:1rem;opacity:0.6">Category Distribution</h3>
-        <div class="chart-container" style="height:200px;display:flex;align-items:flex-end;gap:1.5rem;padding-bottom:1rem;border-bottom:1px solid var(--border)">
-          ${(data.categoryDistribution || []).map(c => `
-            <div class="chart-bar-group" style="flex:1;display:flex;flex-col;align-items:center;gap:0.5rem">
-              <div class="chart-bar" style="width:100%;background:var(--primary);height:${(c._count / (stats.productCount || 1)) * 100}%;border-radius:4px 4px 0 0;min-height:4px;transition:height 1s ease"></div>
-              <span class="text-[9px] uppercase tracking-tighter opacity-40 text-center truncate w-full">${c.categoryId}</span>
-            </div>
-          `).join('')}
-        </div>
+
+    <div class="stat-card" style="margin-bottom:1.5rem">
+      <h3 style="font-size:1rem;opacity:0.6;margin-bottom:1.5rem">Category Distribution</h3>
+      <div class="chart-container" style="height:200px;display:flex;align-items:flex-end;gap:1rem;padding-bottom:1rem;border-bottom:1px solid var(--border);overflow-x:auto">
+        ${(data.categoryDistribution || []).map(c => `
+          <div class="chart-bar-group" style="flex:1;min-width:40px;display:flex;flex-direction:column;align-items:center;gap:0.5rem">
+            <div class="chart-bar" style="width:100%;background:var(--primary);height:${(c._count / (stats.productCount || 1)) * 180}px;border-radius:4px 4px 0 0;min-height:4px;transition:height 1s ease"></div>
+            <span style="font-size:9px;text-transform:uppercase;letter-spacing:-0.02em;opacity:0.4;text-align:center;width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.categoryId}</span>
+          </div>
+        `).join('')}
       </div>
     </div>
- 
-    <div class="table-container mt-10">
+
+    <div class="table-container">
       <div class="table-header"><h3>Click Stream (Recent)</h3></div>
       <table>
-        <thead><tr><th>Product</th><th>Source</th><th>User Agent</th><th>Time</th></tr></thead>
+        <thead><tr><th>Product</th><th class="hide-xs">Source</th><th class="hide-sm">User Agent</th><th>Time</th></tr></thead>
         <tbody>
           ${(data.clicks || []).slice(0, 10).map(c => `
             <tr>
               <td><strong>${c.product?.name || 'Unknown'}</strong></td>
-              <td><span class="badge badge-info">${c.source || 'Direct'}</span></td>
-              <td class="text-xs opacity-50 truncate max-w-xs">${c.userAgent || '-'}</td>
-              <td class="text-xs">${new Date(c.clickedAt || c.createdAt).toLocaleString()}</td>
+              <td class="hide-xs"><span class="badge badge-info">${c.source || 'Direct'}</span></td>
+              <td class="text-xs hide-sm" style="opacity:0.5;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.userAgent || '-'}</td>
+              <td class="text-xs">${new Date(c.createdAt).toLocaleString()}</td>
             </tr>
           `).join('') || '<tr><td colspan="4" class="text-center text-muted" style="padding:2rem">No clicks recorded</td></tr>'}
         </tbody>
@@ -712,33 +934,37 @@ async function renderAnalytics(main) {
     </div>
   `;
 }
- 
+
 // === Reviews ===
 async function renderReviews(main) {
   const reviews = await api('/admin/reviews');
   if (!reviews) return;
- 
+
   main.innerHTML = `
     <div class="page-header">
       <div><h2>Reviews</h2><div class="subtitle">${reviews.length} customer reviews total</div></div>
     </div>
     <div class="table-container">
       <table>
-        <thead><tr><th>Product</th><th>User</th><th>Rating</th><th>Comment</th><th>Status</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Product</th><th class="hide-xs">User</th><th>Rating</th><th class="hide-sm">Comment</th><th>Status</th><th>Actions</th></tr></thead>
         <tbody>
           ${reviews.map(r => `
             <tr>
-              <td class="flex items-center gap-2">
-                <img src="${r.product?.image || ''}" class="product-thumb" style="width:30px;height:30px">
-                <span class="text-sm font-bold">${r.product?.name || 'Unknown'}</span>
+              <td>
+                <div style="display:flex;align-items:center;gap:0.5rem">
+                  <img src="${r.product?.image || ''}" class="product-thumb" style="width:30px;height:30px" onerror="this.style.opacity='0.2'">
+                  <span class="text-sm font-bold">${r.product?.name || 'Unknown'}</span>
+                </div>
               </td>
-              <td><strong>${r.userName}</strong></td>
+              <td class="hide-xs"><strong>${r.userName}</strong></td>
               <td><span class="badge badge-warning">${r.rating}/5</span></td>
-              <td class="text-sm italic opacity-80 max-w-xs truncate" title="${r.comment}">"${r.comment}"</td>
+              <td class="text-sm hide-sm" style="font-style:italic;opacity:0.8;max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${r.comment}">"${r.comment}"</td>
               <td><span class="badge ${r.isVerified ? 'badge-success' : 'badge-info'}">${r.isVerified ? 'Verified' : 'Pending'}</span></td>
               <td>
-                ${!r.isVerified ? `<button class="btn btn-sm btn-primary btn-verify-review" data-id="${r.id}"><span class="material-symbols-outlined">verified</span> Verify</button>` : ''}
-                <button class="btn btn-sm btn-danger btn-delete-review" data-id="${r.id}"><span class="material-symbols-outlined">delete</span></button>
+                <div class="action-btns">
+                  ${!r.isVerified ? `<button class="btn btn-sm btn-primary btn-verify-review" data-id="${r.id}" title="Verify"><span class="material-symbols-outlined">verified</span></button>` : ''}
+                  <button class="btn btn-sm btn-danger btn-delete-review" data-id="${r.id}" title="Delete"><span class="material-symbols-outlined">delete</span></button>
+                </div>
               </td>
             </tr>
           `).join('') || '<tr><td colspan="6" class="text-center text-muted" style="padding:2rem">No reviews to manage</td></tr>'}
@@ -746,78 +972,77 @@ async function renderReviews(main) {
       </table>
     </div>
   `;
- 
+
   document.querySelectorAll('.btn-verify-review').forEach(b => b.addEventListener('click', async () => {
     await api(`/admin/reviews/${b.dataset.id}/verify`, { method: 'POST' });
     toast('Review verified'); renderView();
   }));
- 
+
   document.querySelectorAll('.btn-delete-review').forEach(b => b.addEventListener('click', async () => {
     if (!confirm('Delete this review?')) return;
-    await api(`/reviews/${b.dataset.id}`, { method: 'DELETE' });
+    const res = await api(`/reviews/${b.dataset.id}`, { method: 'DELETE' });
+    if (res?.error) { toast('Delete failed', 'error'); return; }
     toast('Review deleted'); renderView();
   }));
 }
- 
-// === Support Functions ===
+
+// === Drag & Drop Upload Support ===
 function initDragAndDrop(dropzone, onUpload) {
-    ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => {
-        dropzone.addEventListener(name, (e) => { e.preventDefault(); e.stopPropagation(); });
-    });
- 
-    dropzone.addEventListener('dragover', () => dropzone.classList.add('drag-active'));
-    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-active'));
-    dropzone.addEventListener('drop', async (e) => {
-        dropzone.classList.remove('drag-active');
-        const files = Array.from(e.dataTransfer.files);
-        if (!files.length) return;
- 
-        const formData = new FormData();
-        files.forEach(f => formData.append('files', f));
- 
-        dropzone.innerHTML = '<div class="loading-spinner"></div>';
- 
-        try {
-            const res = await fetch(`${API}/media/upload`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${token}` },
-                body: formData
-            });
-            const data = await res.json();
-            if (data && data[0]) onUpload(data[0].url);
-            else toast('Upload failed', 'error');
-        } catch (err) {
-            toast('Upload error', 'error');
-        } finally {
-            dropzone.innerHTML = `<span class="material-symbols-outlined">upload_file</span><span>Upload Completed</span>`;
-        }
-    });
- 
-    dropzone.addEventListener('click', () => {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.accept = 'image/*';
-        input.onchange = async () => {
-            const file = input.files[0];
-            if (!file) return;
-            const formData = new FormData();
-            formData.append('files', file);
- 
-            dropzone.innerHTML = '<div class="loading-spinner"></div>';
-            try {
-                const res = await fetch(`${API}/media/upload`, {
-                    method: 'POST',
-                    headers: { 'Authorization': `Bearer ${token}` },
-                    body: formData
-                });
-                const data = await res.json();
-                if (data && data[0]) onUpload(data[0].url);
-            } catch (err) { toast('Upload error', 'error'); }
-            finally { dropzone.innerHTML = `<span class="material-symbols-outlined">upload_file</span><span>Upload Completed</span>`; }
-        };
-        input.click();
-    });
+  ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(name => {
+    dropzone.addEventListener(name, (e) => { e.preventDefault(); e.stopPropagation(); });
+  });
+
+  dropzone.addEventListener('dragover', () => dropzone.classList.add('drag-active'));
+  dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-active'));
+  dropzone.addEventListener('drop', async (e) => {
+    dropzone.classList.remove('drag-active');
+    const files = Array.from(e.dataTransfer.files);
+    if (!files.length) return;
+
+    const formData = new FormData();
+    files.forEach(f => formData.append('files', f));
+    dropzone.innerHTML = '<div class="loading-spinner"></div>';
+
+    try {
+      const res = await fetch(`${API}/media/upload`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${token}` },
+        body: formData
+      });
+      const data = await res.json();
+      if (data && data[0]) onUpload(data[0].url);
+      else toast('Upload failed', 'error');
+    } catch (err) {
+      toast('Upload error', 'error');
+    } finally {
+      dropzone.innerHTML = `<span class="material-symbols-outlined">upload_file</span><span>Upload Completed ✓</span>`;
+    }
+  });
+
+  dropzone.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = async () => {
+      const file = input.files[0];
+      if (!file) return;
+      const formData = new FormData();
+      formData.append('files', file);
+      dropzone.innerHTML = '<div class="loading-spinner"></div>';
+      try {
+        const res = await fetch(`${API}/media/upload`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` },
+          body: formData
+        });
+        const data = await res.json();
+        if (data && data[0]) onUpload(data[0].url);
+      } catch (err) { toast('Upload error', 'error'); }
+      finally { dropzone.innerHTML = `<span class="material-symbols-outlined">upload_file</span><span>Upload Completed ✓</span>`; }
+    };
+    input.click();
+  });
 }
- 
+
 // Boot
 render();
