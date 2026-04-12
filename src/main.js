@@ -811,22 +811,29 @@ class MRTApp {
       if (!el) return;
       const list = testimonials.filter(t => t.region === reg);
       el.innerHTML = list.map((t, idx) => `
-        <div class="p-10 bg-white/40 backdrop-blur-xl rounded-[2.5rem] border border-white/60 hover:shadow-2xl transition-all duration-700 group reveal-up relative overflow-hidden" 
+        <div class="p-5 md:p-7 lg:p-10 bg-white/85 md:bg-white/70 lg:bg-white/40 backdrop-blur-xl rounded-[1.75rem] md:rounded-[2rem] lg:rounded-[2.5rem] border border-primary/10 md:border-white/70 lg:border-white/60 hover:shadow-2xl transition-all duration-700 group reveal-up relative overflow-hidden shadow-[0_20px_50px_rgba(15,23,42,0.08)] md:shadow-[0_24px_60px_rgba(15,23,42,0.08)] lg:shadow-none" 
              style="transition-delay: ${idx * 150}ms">
-          <div class="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
-            <span class="material-symbols-outlined text-6xl text-primary">format_quote</span>
+          <div class="absolute inset-x-0 top-0 h-24 md:h-28 lg:hidden bg-gradient-to-br from-primary/12 via-primary/5 to-transparent"></div>
+          <div class="absolute top-0 right-0 p-4 md:p-5 lg:p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+            <span class="material-symbols-outlined text-5xl md:text-6xl text-primary">format_quote</span>
           </div>
-          <div class="flex mb-6 space-x-1">
+          <div class="relative z-10 flex lg:hidden items-center justify-between gap-3 mb-4 md:mb-5">
+            <span class="inline-flex items-center rounded-full bg-primary/10 px-3 py-1 text-[9px] md:text-[10px] font-black uppercase tracking-[0.28em] text-primary lg:hidden">Verified Voice</span>
+            <div class="flex space-x-1">
+              ${Array(5).fill('<span class="material-symbols-outlined text-sm text-primary fill-primary">star</span>').join('')}
+            </div>
+          </div>
+          <div class="hidden lg:flex mb-6 space-x-1">
             ${Array(5).fill('<span class="material-symbols-outlined text-sm text-primary fill-primary">star</span>').join('')}
           </div>
-          <p class="text-2xl font-headline italic mb-10 leading-relaxed text-on-surface opacity-90 group-hover:opacity-100 transition-opacity relative z-10">"${t.text}"</p>
-          <div class="flex items-center space-x-4 relative z-10">
-            <div class="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-lg">
+          <p class="text-lg md:text-[1.35rem] lg:text-2xl font-headline italic mb-6 md:mb-8 lg:mb-10 leading-relaxed text-on-surface opacity-90 group-hover:opacity-100 transition-opacity relative z-10">"${t.text}"</p>
+          <div class="flex items-center gap-3 md:gap-4 relative z-10">
+            <div class="w-11 h-11 md:w-12 md:h-12 rounded-2xl md:rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-base md:text-lg ring-1 ring-primary/10">
               ${t.name.charAt(0)}
             </div>
-            <div class="flex flex-col">
-              <span class="text-sm font-bold uppercase tracking-[0.2em] text-primary">${t.name}</span>
-              <span class="text-[10px] uppercase tracking-widest text-on-surface-variant opacity-50 font-bold">${t.location}</span>
+            <div class="flex flex-col min-w-0">
+              <span class="text-xs md:text-sm font-bold uppercase tracking-[0.18em] md:tracking-[0.2em] text-primary">${t.name}</span>
+              <span class="text-[10px] uppercase tracking-[0.22em] md:tracking-widest text-on-surface-variant opacity-60 font-bold">${t.location}</span>
             </div>
           </div>
         </div>
