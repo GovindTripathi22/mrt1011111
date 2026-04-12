@@ -794,6 +794,7 @@ class MRTApp {
     setTimeout(() => {
       ScrollTrigger.refresh();
     }, 1000);
+  }
 
   injectCardStyles() {
     if (document.getElementById('mrt-card-styles')) return;
