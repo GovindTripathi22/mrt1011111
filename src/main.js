@@ -145,7 +145,6 @@ class MRTApp {
       this.initScrollReveal();
       this.animateReveals();
       this.bindEvents();
-      this.initSmoothScroll();
 
       // Export to global scope for button onclick events (Vite module fix)
       window.openQuickView = (id) => this.openQuickView(id);
