@@ -22,29 +22,69 @@
 </head>
 <body class="bg-surface text-on-surface">
     <!-- TopNavBar -->
-    <header class="fixed top-0 w-full z-50 glass-nav border-b border-outline-variant/10">
-        <div class="flex justify-between items-center px-8 py-4 max-w-screen-2xl mx-auto">
-            <div class="flex items-center">
-                <a href="index.html" data-logo class="flex items-center h-10 md:h-12"></a>
-            </div>
-            
-            <nav class="hidden md:flex items-center space-x-12">
-                <a href="index.html" class="text-on-surface-variant font-medium hover:text-primary transition-colors serif italic text-lg tracking-tight">Home</a>
-                <a href="about.html" class="text-on-surface-variant font-medium hover:text-primary transition-colors serif italic text-lg tracking-tight">About</a>
-                <a href="categories.html" class="text-on-surface-variant font-medium hover:text-primary transition-colors serif italic text-lg tracking-tight">Categories</a>
-                <a href="contact.html" class="text-on-surface border-b-2 border-primary font-medium pb-1 serif italic text-lg tracking-tight">Contact</a>
-            </nav>
-            
-            <div class="flex items-center space-x-6">
-                <button id="cart-button" class="relative hover:bg-surface-container-high p-2 rounded-full transition-all duration-300 transform active:scale-95 text-primary">
-                    <span class="material-symbols-outlined text-2xl">shopping_basket</span>
-                    <span id="cart-count" class="absolute -top-1 -right-1 bg-primary text-on-primary text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full shadow-lg transform transition-all duration-300 opacity-0 scale-0">0</span>
-                </button>
-            </div>
+    <header class="fixed top-0 left-0 w-full z-[100] bg-white/95 backdrop-blur-md border-b border-gray-100 h-14" id="header">
+      <div class="max-w-screen-2xl mx-auto px-4 h-full flex items-center justify-between relative">
+        
+        <!-- Left: Hamburger (Mobile) / Logo (Desktop) -->
+        <div class="flex items-center gap-4 z-50">
+            <button id="mobile-menu-btn" class="md:hidden flex items-center justify-center w-10 h-10 text-gray-900">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor" class="w-7 h-7">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+              </svg>
+            </button>
+            <a href="index.html" class="hidden md:flex items-center">
+              <span class="text-[22px] font-extrabold italic tracking-tight text-gray-900 font-headline uppercase leading-none mt-1">MRT</span>
+            </a>
         </div>
+
+        <!-- Middle: Navigation (Desktop) / Logo (Mobile) -->
+        <div class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-50 pointer-events-none md:pointer-events-auto">
+            <!-- Logo for Mobile Only -->
+            <a href="index.html" class="md:hidden flex items-center justify-center pointer-events-auto">
+                <span class="text-[22px] font-extrabold italic tracking-tight text-gray-900 font-headline uppercase leading-none mt-1">MRT</span>
+            </a>
+            <!-- Navigation for Desktop Only -->
+            <nav class="hidden md:flex items-center gap-10">
+                <a href="index.html" class="text-[11px] font-bold uppercase tracking-[0.25em] text-gray-900 hover:text-primary transition-colors">Home</a>
+                <a href="categories.html" class="text-[11px] font-bold uppercase tracking-[0.25em] text-gray-900 hover:text-primary transition-colors">Categories</a>
+                <a href="about.html" class="text-[11px] font-bold uppercase tracking-[0.25em] text-gray-900 hover:text-primary transition-colors">About</a>
+                <a href="contact.html" class="text-[11px] font-bold uppercase tracking-[0.25em] text-primary transition-colors">Contact</a>
+            </nav>
+        </div>
+
+        <!-- Right: Social Media -->
+        <div class="flex items-center justify-end gap-3 z-50">
+          <a href="#" class="text-gray-900 hover:text-[#E4405F] transition-all duration-300" aria-label="Instagram">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
+          </a>
+          <a href="#" class="text-gray-900 hover:text-black transition-all duration-300" aria-label="TikTok">
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12a4 4 0 1 0 4 4V2h5a4 4 0 0 0 4 4"/></svg>
+          </a>
+          <a href="https://wa.me/19044594398" target="_blank" class="text-gray-900 hover:text-[#25D366] transition-all duration-300" aria-label="WhatsApp">
+            <svg xmlns="http://www.w3.org/2000/svg" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></svg>
+          </a>
+        </div>
+      </div>
     </header>
 
-    <main class="pt-32 pb-24">
+    <!-- Mobile Drawer Overlay -->
+    <div id="mobile-drawer-overlay" class="fixed inset-0 bg-black/50 z-[105] hidden opacity-0 transition-opacity duration-300"></div>
+    <aside id="mobile-drawer" class="fixed top-0 left-0 w-[85vw] max-w-[340px] h-[100dvh] bg-white z-[110] transform -translate-x-full transition-transform duration-300 flex flex-col">
+      <div class="p-5 flex justify-between items-center border-b border-gray-100">
+        <span class="font-extrabold text-xl text-gray-900 italic font-headline uppercase">Menu</span>
+        <button id="close-drawer-btn" class="p-2 text-gray-400 hover:text-black">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <nav class="flex flex-col p-6 gap-6">
+        <a href="index.html" class="text-base font-normal tracking-wide text-gray-900 border-b border-gray-50 pb-4 flex justify-between items-center">Home <span class="material-symbols-outlined text-gray-300 text-sm">chevron_right</span></a>
+        <a href="categories.html" class="text-base font-normal tracking-wide text-gray-900 border-b border-gray-50 pb-4 flex justify-between items-center">Categories <span class="material-symbols-outlined text-gray-300 text-sm">chevron_right</span></a>
+        <a href="about.html" class="text-base font-normal tracking-wide text-gray-900 border-b border-gray-50 pb-4 flex justify-between items-center">Our Story <span class="material-symbols-outlined text-gray-300 text-sm">chevron_right</span></a>
+        <a href="contact.html" class="text-base font-normal tracking-wide text-gray-900 flex justify-between items-center">Contact <span class="material-symbols-outlined text-gray-300 text-sm">chevron_right</span></a>
+      </nav>
+    </aside>
+
+    <main class="pt-14 pb-24 overflow-x-hidden">
         <!-- Hero Section -->
         <section class="px-8 max-w-screen-2xl mx-auto mb-20">
             <div class="max-w-3xl reveal-up">
@@ -111,46 +151,31 @@
         </section>
     </main>
 
-    <!-- Footer -->
-    <footer id="contact" class="bg-surface-container-low pt-24 pb-12 border-t border-outline-variant/10">
-        <div class="px-8 max-w-screen-2xl mx-auto">
-            <div class="flex flex-col md:flex-row justify-between items-start mb-20 gap-12">
-                <div class="max-w-md">
-                    <div data-logo class="mb-8"></div>
-                    <p class="text-on-surface-variant leading-relaxed serif italic opacity-70">A premium holding specialized in curated global sourcing, international trade, and luxury retail experiences.</p>
-                </div>
-                
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-16">
-                    <div class="space-y-6">
-                        <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-primary">Explore</h4>
-                        <ul class="space-y-4">
-                            <li><a href="index.html" class="text-on-surface-variant hover:text-primary transition-colors serif italic">Story</a></li>
-                            <li><a href="categories.html" class="text-on-surface-variant hover:text-primary transition-colors serif italic">Boutique</a></li>
-                            <li><a href="about.html" class="text-on-surface-variant hover:text-primary transition-colors serif italic">Vision</a></li>
-                        </ul>
-                    </div>
-                    <div class="space-y-6">
-                        <h4 class="text-xs font-bold uppercase tracking-[0.2em] text-primary">Office</h4>
-                        <p class="text-on-surface-variant serif italic text-sm leading-relaxed">
-                            MRT International Holding LLC<br>
-                            Global Sourcing Hub<br>
-                            Florida, USA
-                        </p>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="pt-12 border-t border-outline-variant/10 flex flex-col md:flex-row justify-between items-center gap-6">
-                <div class="text-[10px] font-bold uppercase tracking-widest opacity-40">
-                    © 2025 MRT International Holding LLC. Artifact by Gemini.
-                </div>
-                <div class="flex space-x-8 text-[10px] font-bold uppercase tracking-widest opacity-40">
-                    <a href="#" class="hover:opacity-100 transition-opacity">Privacy</a>
-                    <a href="#" class="hover:opacity-100 transition-opacity">Terms</a>
-                    <a href="contact.html" class="hover:opacity-100 transition-opacity">Contact</a>
-                </div>
-            </div>
-        </div>
-    </footer>
+    <!-- App Bottom Navigation (Mobile Only) -->
+    <nav class="mrt-app-bottom-nav fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-xl border-t border-gray-200 z-[90] pb-safe">
+    <div class="flex justify-between items-center px-4 py-3">
+        <a href="index.html" class="flex flex-col items-center text-gray-400 hover:text-primary w-14 group">
+            <span class="material-symbols-outlined text-[24px]">home</span>
+            <span class="text-[9px] font-bold mt-1">Home</span>
+        </a>
+        <a href="categories.html" class="flex flex-col items-center text-gray-400 hover:text-primary w-14 group">
+            <span class="material-symbols-outlined text-[24px]">grid_view</span>
+            <span class="text-[9px] font-bold mt-1">Categories</span>
+        </a>
+        <a href="contact.html" class="flex flex-col items-center text-primary w-14 group">
+            <span class="material-symbols-outlined text-[24px]">call</span>
+            <span class="text-[9px] font-bold mt-1">Contact</span>
+        </a>
+        <a href="#" class="flex flex-col items-center text-gray-400 hover:text-primary w-14 group relative" id="mobile-cart-btn">
+            <span class="absolute -top-1 right-0.5 bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">0</span>
+            <span class="material-symbols-outlined text-[24px]">shopping_bag</span>
+            <span class="text-[9px] font-bold mt-1">Cart</span>
+        </a>
+        <a href="about.html" class="flex flex-col items-center text-gray-400 hover:text-primary w-14 group">
+            <span class="material-symbols-outlined text-[24px]">person</span>
+            <span class="text-[9px] font-bold mt-1">Profile</span>
+        </a>
+    </div>
+    </nav>
 </body>
 </html>
