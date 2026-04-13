@@ -33,37 +33,26 @@
 </head>
 <body class="bg-surface text-on-surface">
     <!-- Main Header -->
-    <header class="sticky top-0 w-full z-50 bg-white/95 backdrop-blur-md border-b border-gray-100 transition-transform duration-300" id="header">
-      <div class="max-w-screen-2xl mx-auto px-4 h-14 flex items-center justify-between">
+    <header class="fixed top-0 left-0 w-full z-[100] bg-white/95 backdrop-blur-md border-b border-gray-100 h-14" id="header">
+      <div class="max-w-screen-2xl mx-auto px-4 h-full flex items-center justify-between relative">
         
-        <!-- Hamburger Menu -->
-        <button id="mobile-menu-btn" class="md:hidden flex items-center justify-center w-10 h-10 -ml-2 text-gray-900 z-50" aria-label="Menu">
+        <button id="mobile-menu-btn" class="md:hidden flex items-center justify-start w-10 h-10 text-gray-900 z-50">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor" class="w-7 h-7">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
           </svg>
         </button>
 
-        <!-- Centered Logo -->
-        <a href="index.html" class="absolute left-1/2 -translate-x-1/2 flex flex-col items-center justify-center md:static md:translate-x-0 md:flex-row md:gap-2">
+        <a href="index.html" class="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center justify-center z-50">
           <span class="text-[22px] font-extrabold italic tracking-tight text-gray-900 font-headline uppercase leading-none mt-1">MRT</span>
         </a>
 
-        <!-- Desktop Navigation & Icons -->
-        <div class="flex items-center gap-1 -mr-2 text-gray-900">
-          <nav class="hidden md:flex items-center gap-8 mr-6" id="desktop-menu">
-              <a href="index.html" class="text-sm font-medium hover:text-primary transition-colors">Home</a>
-              <a href="categories.html" class="text-sm font-medium hover:text-primary transition-colors">Shop</a>
-              <a href="about.html" class="text-sm font-medium hover:text-primary transition-colors">About</a>
-          </nav>
-          
-          <button class="w-10 h-10 flex items-center justify-center hover:text-primary transition-colors">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" /></svg>
-          </button>
-          <button class="w-10 h-10 flex items-center justify-center relative hover:text-primary transition-colors">
+        <div class="flex items-center justify-end w-10 z-50">
+          <button class="w-10 h-10 flex items-center justify-end relative hover:text-primary transition-colors text-gray-900">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
-            <span class="absolute top-1.5 right-1.5 bg-black text-white text-[9px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-full">0</span>
+            <span class="absolute top-1.5 -right-1 bg-black text-white text-[9px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-full">0</span>
           </button>
         </div>
+
       </div>
     </header>
 
@@ -78,7 +67,7 @@
       </div>
       <nav class="flex flex-col p-6 gap-6">
         <a href="index.html" class="text-base font-normal tracking-wide text-gray-900 border-b border-gray-50 pb-4 flex justify-between items-center">Home <span class="material-symbols-outlined text-gray-300 text-sm">chevron_right</span></a>
-        <a href="categories.html" class="text-base font-normal tracking-wide text-gray-900 border-b border-gray-50 pb-4 flex justify-between items-center">Shop All <span class="material-symbols-outlined text-gray-300 text-sm">chevron_right</span></a>
+        <a href="categories.html" class="text-base font-normal tracking-wide text-gray-900 border-b border-gray-50 pb-4 flex justify-between items-center">Categories <span class="material-symbols-outlined text-gray-300 text-sm">chevron_right</span></a>
         <a href="about.html" class="text-base font-normal tracking-wide text-gray-900 border-b border-gray-50 pb-4 flex justify-between items-center">Our Story <span class="material-symbols-outlined text-gray-300 text-sm">chevron_right</span></a>
         <a href="contact.html" class="text-base font-normal tracking-wide text-gray-900 flex justify-between items-center">Contact <span class="material-symbols-outlined text-gray-300 text-sm">chevron_right</span></a>
       </nav>
@@ -167,23 +156,27 @@
     <script type="module" src="/src/main.js"></script>
     <!-- App Bottom Navigation (Mobile Only) -->
     <nav class="mrt-app-bottom-nav fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-xl border-t border-gray-200 z-[90] pb-safe">
-        <div class="flex justify-between items-center px-6 py-3">
-            <a href="index.html" class="flex flex-col items-center text-primary group">
-                <span class="material-symbols-outlined text-2xl">home</span>
-                <span class="text-[10px] font-bold mt-1">Home</span>
+        <div class="flex justify-between items-center px-4 py-2">
+            <a href="index.html" class="flex flex-col items-center text-gray-400 hover:text-gray-900 w-14">
+                <span class="material-symbols-outlined text-[24px]">home</span>
+                <span class="text-[9px] font-semibold mt-0.5">Home</span>
             </a>
-            <a href="categories.html" class="flex flex-col items-center text-gray-400 hover:text-primary group">
-                <span class="material-symbols-outlined text-2xl">grid_view</span>
-                <span class="text-[10px] font-bold mt-1">Shop</span>
+            <a href="categories.html" class="flex flex-col items-center text-gray-400 hover:text-gray-900 w-14">
+                <span class="material-symbols-outlined text-[24px]">grid_view</span>
+                <span class="text-[9px] font-semibold mt-0.5">Categories</span>
             </a>
-            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-primary group relative" id="mobile-cart-btn">
-                <span class="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">0</span>
-                <span class="material-symbols-outlined text-2xl">shopping_bag</span>
-                <span class="text-[10px] font-bold mt-1">Cart</span>
+            <a href="contact.html" class="flex flex-col items-center text-gray-400 hover:text-gray-900 w-14">
+                <span class="material-symbols-outlined text-[24px]">call</span>
+                <span class="text-[9px] font-semibold mt-0.5">Contact</span>
             </a>
-            <a href="contact.html" class="flex flex-col items-center text-gray-400 hover:text-primary group">
-                <span class="material-symbols-outlined text-2xl">person</span>
-                <span class="text-[10px] font-bold mt-1">Profile</span>
+            <a href="#" class="flex flex-col items-center text-gray-400 hover:text-gray-900 relative w-14">
+                <span class="absolute top-0 right-1.5 bg-red-500 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">0</span>
+                <span class="material-symbols-outlined text-[24px]">shopping_bag</span>
+                <span class="text-[9px] font-semibold mt-0.5">Cart</span>
+            </a>
+            <a href="about.html" class="flex flex-col items-center text-gray-400 hover:text-gray-900 w-14">
+                <span class="material-symbols-outlined text-[24px]">person</span>
+                <span class="text-[9px] font-semibold mt-0.5">Profile</span>
             </a>
         </div>
     </nav>

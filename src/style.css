@@ -341,3 +341,16 @@
   /* Remove Quick View Button on Mobile - Focus on tapping the image to buy */
   .mrt-product-card button.w-full { display: none !important; }
 }
+
+@media (max-width: 767px) {
+  /* Push body content down exactly the height of the header so there is no white space or overlap */
+  body {
+    padding-top: 56px !important; 
+  }
+  /* Remove any top margin from the first section that might cause white space */
+  main > section:first-child,
+  #categories {
+    margin-top: 0 !important;
+    padding-top: 16px !important;
+  }
+}
