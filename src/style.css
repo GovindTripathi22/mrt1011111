@@ -342,6 +342,7 @@
   .mrt-product-card button.w-full { display: none !important; }
 }
 
+/* --- FIXED HEADER SPACING FIX --- */
 @media (max-width: 767px) {
   /* Push body content down exactly the height of the header so there is no white space or overlap */
   body {
