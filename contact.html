@@ -156,30 +156,25 @@
     </main>
 
     <!-- App Bottom Navigation (Mobile Only) -->
-    <nav class="mrt-app-bottom-nav fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-xl border-t border-gray-200 z-[90] pb-safe">
-    <div class="flex justify-between items-center px-4 py-3">
-        <a href="index.html" class="flex flex-col items-center text-gray-400 hover:text-primary w-14 group">
-            <span class="material-symbols-outlined text-[24px]">home</span>
-            <span class="text-[9px] font-bold mt-1">Home</span>
-        </a>
-        <a href="categories.html" class="flex flex-col items-center text-gray-400 hover:text-primary w-14 group">
-            <span class="material-symbols-outlined text-[24px]">grid_view</span>
-            <span class="text-[9px] font-bold mt-1">Categories</span>
-        </a>
-        <a href="contact.html" class="flex flex-col items-center text-primary w-14 group">
-            <span class="material-symbols-outlined text-[24px]">call</span>
-            <span class="text-[9px] font-bold mt-1">Contact</span>
-        </a>
-        <a href="#" class="flex flex-col items-center text-gray-400 hover:text-primary w-14 group relative" id="mobile-cart-btn">
-            <span class="absolute -top-1 right-0.5 bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">0</span>
-            <span class="material-symbols-outlined text-[24px]">shopping_bag</span>
-            <span class="text-[9px] font-bold mt-1">Cart</span>
-        </a>
-        <a href="about.html" class="flex flex-col items-center text-gray-400 hover:text-primary w-14 group">
-            <span class="material-symbols-outlined text-[24px]">person</span>
-            <span class="text-[9px] font-bold mt-1">Profile</span>
-        </a>
-    </div>
+    <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-2xl border-t border-gray-100/50 z-[90] pb-safe">
+        <div class="grid grid-cols-4 px-6 py-4">
+            <a href="index.html" class="flex flex-col items-center gap-1.5 transition-all text-gray-400">
+                <span class="material-symbols-outlined text-[26px]">home</span>
+                <span class="text-[9.5px] font-bold uppercase tracking-widest leading-none">Home</span>
+            </a>
+            <a href="categories.html" class="flex flex-col items-center gap-1.5 transition-all text-gray-400">
+                <span class="material-symbols-outlined text-[26px]">grid_view</span>
+                <span class="text-[9.5px] font-bold uppercase tracking-widest leading-none">Categories</span>
+            </a>
+            <a href="contact.html" class="flex flex-col items-center gap-1.5 transition-all text-primary">
+                <span class="material-symbols-outlined text-[26px]">alternate_email</span>
+                <span class="text-[9.5px] font-extrabold uppercase tracking-widest leading-none">Contact</span>
+            </a>
+            <a href="about.html" class="flex flex-col items-center gap-1.5 transition-all text-gray-400">
+                <span class="material-symbols-outlined text-[26px]">info</span>
+                <span class="text-[9.5px] font-bold uppercase tracking-widest leading-none">About</span>
+            </a>
+        </div>
     </nav>
 </body>
 </html>

@@ -21,15 +21,11 @@ import adminRouter from './routes/admin.js';
 import contactRouter from './routes/contact.js';
 import prisma from './db.js';
 
-
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3001;
-
-
 
 // Ensure upload directory
 const uploadDir = path.join(__dirname, '../public/assets/uploads');
@@ -149,7 +145,6 @@ app.get('/api/legacy/products', async (req, res) => {
   }
 });
 
-// (Products route handled by router mounted above)
 // Legacy: Themes as object keyed by slug
 app.get('/api/legacy/themes', async (req, res) => {
   try {
@@ -179,23 +174,23 @@ app.get('/health', (req, res) => {
   res.status(200).json({ status: 'OK', message: 'MRT International Server is healthy' });
 });
 
-// Final: Unified Static Serving for Restoration & Delivery
+// EXPLICIT ADMIN ROUTING FIX
+// Serve static admin files (Support both build and dev structures)
 const adminPath = existsSync(path.join(__dirname, '../dist/admin')) 
   ? path.join(__dirname, '../dist/admin') 
   : path.join(__dirname, '../admin');
 
 app.use('/admin', express.static(adminPath));
-app.use(express.static(path.join(__dirname, '../dist')));
 
-// Admin specific redirect to handle /admin without trailing slash
-app.get('/admin', (req, res) => {
-  res.redirect('/admin/');
+// Ensure /admin/anything serves the admin dashboard, preventing frontend interception
+app.get(/^\/admin(?:\/.*)?$/, (req, res) => {
+  res.sendFile(path.join(adminPath, 'index.html'));
 });
 
 // Robust Catch-all Middleware (Path-Agnostic for Express 5 compatibility)
 app.use((req, res, next) => {
   // Only serve index.html if it's not an API or Media route
-  if (req.url.startsWith('/api') || req.url.includes('/assets')) return next();
+  if (req.url.startsWith('/api') || req.url.includes('/assets') || req.url.startsWith('/admin')) return next();
   res.sendFile(path.join(__dirname, '../dist/index.html'));
 });
 

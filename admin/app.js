@@ -133,11 +133,11 @@ function renderLayout(app) {
 
   app.innerHTML = `
     <div class="admin-layout">
-      <div class="sidebar-overlay" id="sidebar-overlay"></div>
+      <div class="admin-overlay" id="admin-overlay"></div>
       <button class="mobile-nav-toggle" id="mobile-nav-toggle" aria-label="Toggle Menu">
         <span class="material-symbols-outlined">menu</span>
       </button>
-      <aside class="sidebar" id="sidebar-container"></aside>
+      <aside class="admin-sidebar" id="admin-sidebar"></aside>
       <main class="main-content" id="main-content"></main>
     </div>
   `;
@@ -145,26 +145,26 @@ function renderLayout(app) {
   renderView();
 
   const toggle = document.getElementById('mobile-nav-toggle');
-  const overlay = document.getElementById('sidebar-overlay');
-  const sidebar = document.getElementById('sidebar-container');
+  const overlay = document.getElementById('admin-overlay');
+  const sidebar = document.getElementById('admin-sidebar');
 
   if (toggle) {
     toggle.addEventListener('click', () => {
-      sidebar.classList.toggle('open');
-      overlay.classList.toggle('active');
+      sidebar.classList.toggle('show');
+      overlay.classList.toggle('show');
     });
   }
 
   if (overlay) {
     overlay.addEventListener('click', () => {
-      sidebar.classList.remove('open');
-      overlay.classList.remove('active');
+      sidebar.classList.remove('show');
+      overlay.classList.remove('show');
     });
   }
 }
 
 function updateSidebar() {
-  const container = document.getElementById('sidebar-container');
+  const container = document.getElementById('admin-sidebar');
   if (!container) return;
   container.innerHTML = `
     <div class="sidebar-logo">
@@ -219,9 +219,11 @@ function updateSidebar() {
       const view = el.dataset.view;
       if (view === 'logout') { logout(); return; }
       navigate(view);
-      container.classList.remove('open');
-      const overlay = document.getElementById('sidebar-overlay');
-      if (overlay) overlay.classList.remove('active');
+      
+      // Auto-close on mobile
+      container.classList.remove('show');
+      const overlay = document.getElementById('admin-overlay');
+      if (overlay) overlay.classList.remove('show');
     });
   });
 }

@@ -64,10 +64,6 @@
         </div>
 
         <div class="flex items-center justify-end gap-3 z-50">
-          <button class="md:hidden w-10 h-10 flex items-center justify-end relative hover:text-primary transition-colors text-gray-900" type="button" aria-label="Cart">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" /></svg>
-            <span class="absolute top-1.5 -right-1 bg-black text-white text-[9px] font-bold w-3.5 h-3.5 flex items-center justify-center rounded-full shadow-sm">0</span>
-          </button>
           <div class="hidden md:flex items-center gap-3">
             <a href="#" class="text-gray-900 hover:text-[#E4405F] transition-all duration-300" aria-label="Instagram">
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect width="20" height="20" x="2" y="2" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" x2="17.51" y1="6.5" y2="6.5"/></svg>
@@ -181,31 +177,27 @@
     </footer>
 
     <script type="module" src="/src/main.js"></script>
+    
     <!-- App Bottom Navigation (Mobile Only) -->
-    <nav class="mrt-app-bottom-nav fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-xl border-t border-gray-200 z-[90] pb-safe">
-    <div class="flex justify-between items-center px-4 py-3">
-        <a href="index.html" class="flex flex-col items-center text-primary w-14 group">
-            <span class="material-symbols-outlined text-[24px]">home</span>
-            <span class="text-[9px] font-bold mt-1">Home</span>
-        </a>
-        <a href="categories.html" class="flex flex-col items-center text-gray-400 hover:text-primary w-14 group">
-            <span class="material-symbols-outlined text-[24px]">grid_view</span>
-            <span class="text-[9px] font-bold mt-1">Categories</span>
-        </a>
-        <a href="contact.html" class="flex flex-col items-center text-gray-400 hover:text-primary w-14 group">
-            <span class="material-symbols-outlined text-[24px]">call</span>
-            <span class="text-[9px] font-bold mt-1">Contact</span>
-        </a>
-        <a href="#" class="flex flex-col items-center text-gray-400 hover:text-primary w-14 group relative" id="mobile-cart-btn">
-            <span class="absolute -top-1 right-0.5 bg-red-600 text-white text-[8px] font-bold px-1.5 py-0.5 rounded-full shadow-sm">0</span>
-            <span class="material-symbols-outlined text-[24px]">shopping_bag</span>
-            <span class="text-[9px] font-bold mt-1">Cart</span>
-        </a>
-        <a href="about.html" class="flex flex-col items-center text-gray-400 hover:text-primary w-14 group">
-            <span class="material-symbols-outlined text-[24px]">person</span>
-            <span class="text-[9px] font-bold mt-1">Profile</span>
-        </a>
-    </div>
+    <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-2xl border-t border-gray-100/50 z-[90] pb-safe">
+        <div class="grid grid-cols-4 px-6 py-4">
+            <a href="index.html" class="flex flex-col items-center gap-1.5 transition-all text-gray-400">
+                <span class="material-symbols-outlined text-[26px]">home</span>
+                <span class="text-[9.5px] font-bold uppercase tracking-widest leading-none">Home</span>
+            </a>
+            <a href="categories.html" class="flex flex-col items-center gap-1.5 transition-all text-primary">
+                <span class="material-symbols-outlined text-[26px]">grid_view</span>
+                <span class="text-[9.5px] font-extrabold uppercase tracking-widest leading-none">Categories</span>
+            </a>
+            <a href="contact.html" class="flex flex-col items-center gap-1.5 transition-all text-gray-400">
+                <span class="material-symbols-outlined text-[26px]">alternate_email</span>
+                <span class="text-[9.5px] font-bold uppercase tracking-widest leading-none">Contact</span>
+            </a>
+            <a href="about.html" class="flex flex-col items-center gap-1.5 transition-all text-gray-400">
+                <span class="material-symbols-outlined text-[26px]">info</span>
+                <span class="text-[9.5px] font-bold uppercase tracking-widest leading-none">About</span>
+            </a>
+        </div>
     </nav>
 </body>
 </html>

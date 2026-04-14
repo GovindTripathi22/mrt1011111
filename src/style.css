@@ -3,14 +3,14 @@
 @tailwind utilities;
  
 :root {
-  --primary: #914d00;
-  --primary-dark: #633500;
-  --primary-light: #f28c28;
+  --primary: #111111;
+  --primary-dark: #000000;
+  --primary-light: #333333;
   --accent-gold: #c5a059;
   --glass: rgba(255, 255, 255, 0.03);
   --glass-border: rgba(255, 255, 255, 0.08);
-  --font-headline: 'Outfit', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-headline: 'Manrope', sans-serif;
+  --font-body: 'Manrope', sans-serif;
 }
  
 @layer base {

@@ -20,11 +20,6 @@
     <style>body { opacity: 0; transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1); } body.loaded { opacity: 1; }</style>
 </head>
 <body class="bg-surface text-on-surface">
-    <!-- Announcement Bar -->
-    <div class="bg-primary text-white text-[10px] uppercase tracking-widest py-2 text-center font-bold relative z-[60]">
-      Free Worldwide Shipping on all orders over $50
-    </div>
-
     <!-- Main Header -->
     <header class="sticky top-0 w-full z-50 transition-all duration-300 bg-white/90 backdrop-blur-md border-b border-gray-100" id="header">
       <div class="max-w-screen-2xl mx-auto px-4 py-3 flex items-center justify-between">
@@ -50,10 +45,6 @@
           
           <button class="text-on-surface hover:text-primary transition-colors p-1">
             <span class="material-symbols-outlined text-[24px]">search</span>
-          </button>
-          <button class="relative text-on-surface hover:text-primary transition-colors p-1">
-            <span class="material-symbols-outlined text-[24px]">shopping_bag</span>
-            <span class="absolute -top-1 -right-1 bg-red-500 text-white text-[9px] font-bold w-4 h-4 flex items-center justify-center rounded-full shadow-sm">0</span>
           </button>
         </div>
       </div>
@@ -234,5 +225,27 @@
             <p class="text-on-surface-variant font-body text-xs tracking-[0.4em] uppercase opacity-40">© 2024 MRT International Holding LLC. All Rights Reserved.</p>
         </div>
     </footer>
+
+    <!-- App Bottom Navigation (Mobile Only) -->
+    <nav class="md:hidden fixed bottom-0 left-0 w-full bg-white/95 backdrop-blur-2xl border-t border-gray-100/50 z-[90] pb-safe">
+        <div class="grid grid-cols-4 px-6 py-4">
+            <a href="index.html" class="flex flex-col items-center gap-1.5 transition-all text-gray-400">
+                <span class="material-symbols-outlined text-[26px]">home</span>
+                <span class="text-[9.5px] font-bold uppercase tracking-widest leading-none">Home</span>
+            </a>
+            <a href="categories.html" class="flex flex-col items-center gap-1.5 transition-all text-primary">
+                <span class="material-symbols-outlined text-[26px]">grid_view</span>
+                <span class="text-[9.5px] font-extrabold uppercase tracking-widest leading-none">Categories</span>
+            </a>
+            <a href="contact.html" class="flex flex-col items-center gap-1.5 transition-all text-gray-400">
+                <span class="material-symbols-outlined text-[26px]">alternate_email</span>
+                <span class="text-[9.5px] font-bold uppercase tracking-widest leading-none">Contact</span>
+            </a>
+            <a href="about.html" class="flex flex-col items-center gap-1.5 transition-all text-gray-400">
+                <span class="material-symbols-outlined text-[26px]">info</span>
+                <span class="text-[9.5px] font-bold uppercase tracking-widest leading-none">About</span>
+            </a>
+        </div>
+    </nav>
 </body>
 </html>

@@ -10,24 +10,6 @@ const SVG_LOGO = `
   </svg>
 `;
 
-class ShoppingCart {
-  constructor() {
-    this.items = JSON.parse(localStorage.getItem('mrt_cart')) || [];
-    this.init();
-  }
-  init() { this.bindEvents(); }
-  bindEvents() {
-    document.addEventListener('click', (e) => {
-      const addBtn = e.target.closest('[data-add-to-cart]');
-      if (addBtn) {
-        const product = JSON.parse(addBtn.dataset.product);
-        this.addItem(product);
-      }
-    });
-  }
-  addItem(product) { this.items.push(product); localStorage.setItem('mrt_cart', JSON.stringify(this.items)); }
-}
-
 const ID_MAP = {
   '1': 'home-kitchen',
   '2': 'beauty-personal-care',
@@ -60,23 +42,19 @@ class MRTApp {
     this.globalEventsBound = false;
 
     // 2. Library Guards - RESTRICT SMOOTH SCROLL TO DESKTOP FOR NATIVE MOBILE FEEL
-    if (typeof Lenis !== 'undefined' && window.innerWidth > 768) {
+    // AVORY SCROLL FIX: Buttery smooth Lenis on Desktop, Native on Mobile
+    if (window.innerWidth > 768) {
       this.lenis = new Lenis({
-        duration: 1.4,
-        easing: (t) => 1 - Math.pow(1 - t, 4),   // quartic ease-out — ultra smooth
+        duration: 1.2,
+        easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
         smoothWheel: true,
-        wheelMultiplier: 0.9,
-        touchMultiplier: 1.5,
-        infinite: false,
+        smoothTouch: false,
       });
 
-      this.lenis.on('scroll', () => {
-        if (typeof ScrollTrigger !== 'undefined') {
-          ScrollTrigger.update();
-        }
-      });
-
-      this.initLenis();
+      if (typeof gsap !== 'undefined') {
+        gsap.ticker.add((time) => { this.lenis.raf(time * 1000); });
+        gsap.ticker.lagSmoothing(0);
+      }
     }
 
     const urlParams = new URLSearchParams(window.location.search);
@@ -89,8 +67,6 @@ class MRTApp {
     this.injectLogos();
     this.init();
 
-    this.cart = new ShoppingCart();
-
     // Global state for Quick View and persistence
     this.allProducts = [];
     this.allCategories = [];
@@ -98,13 +74,12 @@ class MRTApp {
     // Bind global functions for onclick handlers
     window.openQuickView = (id) => this.openQuickView(id);
     window.closeQuickView = () => this.closeQuickView();
+    window.openReviewModal = (id, name) => this.openReviewModal(id, name);
     window.mrtApp = this;
   }
 
   async init() {
     try {
-      this.initHeaderScroll();
-
       // Add "Shop Now" scroll listener - Made robust to avoid invalid selector errors
       const allButtons = Array.from(document.querySelectorAll('button'));
       const shopBtn = allButtons.find(el => {
@@ -120,22 +95,34 @@ class MRTApp {
         });
       }
 
-      // Drawer initialization handled in bindEvents() now
-
-      if (this.isBoutique) {
-        await this.initBoutique();
-      } else {
-        await this.renderDynamicHomepage();
-        await this.renderHomepageTestimonials();
+      // --- RENDER AVORY-STYLE 2x4 Categories Grid (Desktop & Mobile Unified) ---
+      const avoryGrid = document.getElementById('avory-categories-grid');
+      if (avoryGrid) {
+        try {
+          const res = await fetch('/api/categories');
+          const categories = await res.json();
+          avoryGrid.innerHTML = categories.slice(0, 8).map(c => `
+            <a href="category.html?c=${c.slug}" class="group relative aspect-[3/4.5] md:aspect-[4/5] overflow-hidden rounded-2xl md:rounded-[2.5rem] bg-gray-100 transition-all duration-700 hover:shadow-2xl">
+              <img src="${c.image || '/assets/categories/' + c.slug + '.png'}" alt="${c.name}" class="h-full w-full object-cover transition-transform duration-[1.5s] group-hover:scale-110" onerror="this.src='/assets/products/premium_product_placeholder.png'">
+              <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent flex flex-col justify-end p-4 md:p-8">
+                <h3 class="text-lg md:text-2xl font-headline italic text-white mb-1 md:mb-2">${c.name}</h3>
+                <span class="text-[9px] md:text-[10px] font-bold uppercase tracking-[0.2em] text-white/50 group-hover:text-primary transition-colors">Explore Collection</span>
+              </div>
+            </a>
+          `).join('');
+        } catch (err) { console.error('Avory Grid render failed:', err); }
       }
 
+      if (window.location.search.includes('c=')) {
+        this.initBoutique();
+      } else {
+        this.renderDynamicHomepage();
+        this.renderHomepageTestimonials();
+      }
+      this.initHeaderScroll();
       this.initScrollReveal();
       this.animateReveals();
       this.bindEvents();
-
-      // Export to global scope for button onclick events (Vite module fix)
-      window.openQuickView = (id) => this.openQuickView(id);
-      window.openReviewModal = (id, name) => this.openReviewModal(id, name);
 
     } catch (err) {
       console.error('MRTApp Initialization Error:', err);
@@ -618,7 +605,7 @@ class MRTApp {
       console.log("[MRT] Initializing Dynamic Homepage...");
       const [catsRes, productsRes] = await Promise.all([
         fetch(`/api/categories?_t=${Date.now()}`),
-        fetch(`/api/products?_t=${Date.now()}`)
+        fetch(`/api/products?limit=100&_t=${Date.now()}`)
       ]);
       
       const categories = await catsRes.json();
@@ -629,7 +616,20 @@ class MRTApp {
         this.allCategories = categories;
         this.allProducts = products;
         
-        this.renderCategoriesGrid(categories);
+        // --- RENDER AVORY-STYLE CIRCLE CATEGORIES ---
+        const avoryContainer = document.getElementById('avory-categories');
+        if (avoryContainer && categories.length > 0) {
+          // Render only the first 8 categories for the horizontal scroll
+          const displayCats = categories.slice(0, 8);
+          avoryContainer.innerHTML = displayCats.map(c => `
+            <a href="category.html?c=${c.slug}" class="flex flex-col items-center gap-2 min-w-[76px] md:min-w-[100px] snap-start group cursor-pointer text-decoration-none">
+                <div class="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden border border-gray-200 shadow-sm group-hover:border-primary transition-all duration-300 p-0.5 bg-white">
+                    <img src="${c.image || `/assets/categories/${c.slug}.png`}" alt="${c.name}" loading="lazy" class="w-full h-full object-cover rounded-full bg-gray-50">
+                </div>
+                <span class="text-[10px] md:text-xs font-semibold text-center leading-tight text-gray-800 line-clamp-2">${c.name}</span>
+            </a>
+          `).join('');
+        }
         this.renderDynamicCarousels(categories, products);
         this.updateSEO("Home", "Global Sourcing Platform");
       } else {
@@ -1002,6 +1002,44 @@ class MRTApp {
       });
     }
 
+    // --- REVIEWS ROUTING FIX ---
+    const reviewForm = document.getElementById('review-form');
+    if (reviewForm && reviewForm.dataset.bound !== 'true') {
+      reviewForm.dataset.bound = 'true';
+      reviewForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const btn = reviewForm.querySelector('button[type="submit"]');
+        const originalText = btn.innerText;
+        btn.innerText = "Submitting...";
+        btn.disabled = true;
+
+        const formData = new FormData(reviewForm);
+        const data = {
+          productId: formData.get('productId'),
+          userName: formData.get('name'), 
+          rating: parseInt(formData.get('rating')),
+          comment: formData.get('text'), // Mapping 'text' to 'comment'
+          location: formData.get('location') || 'Global'
+        };
+
+        try {
+          const res = await fetch('/api/reviews', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+          });
+          if (res.ok) {
+            alert('Thank you! Review submitted for approval.');
+            reviewForm.closest('.fixed').remove();
+          } else { throw new Error('Failed'); }
+        } catch (err) {
+          alert('Error submitting review.');
+          btn.innerText = originalText;
+          btn.disabled = false;
+        }
+      });
+    }
+
     // Expose globally for any legacy callers
     window.closeQuickView = () => this.closeQuickView();
   }
@@ -1140,7 +1178,8 @@ class MRTApp {
       <div class="relative w-full max-w-xl bg-white rounded-3xl p-10 shadow-2xl">
         <h3 class="text-2xl font-bold mb-2">Review ${name}</h3>
         <p class="text-gray-500 mb-8">Share your experience with the global community.</p>
-        <form class="space-y-6" onsubmit="event.preventDefault(); window.mrtApp.submitReview('${id}', this);">
+        <form class="space-y-6" id="review-form">
+          <input type="hidden" name="productId" value="${id}">
           <div>
             <label class="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Rating</label>
             <div class="flex gap-2">
@@ -1154,47 +1193,56 @@ class MRTApp {
           </div>
           <div>
             <label class="block text-xs font-bold uppercase tracking-widest text-gray-400 mb-2">Message</label>
-            <textarea class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-5 focus:ring-2 ring-primary outline-none transition-all" rows="4" placeholder="Your thoughts..." required></textarea>
+            <textarea name="text" class="w-full bg-gray-50 border border-gray-100 rounded-2xl p-5 focus:ring-2 ring-primary outline-none transition-all" rows="4" placeholder="Your thoughts..." required></textarea>
           </div>
           <div class="grid grid-cols-2 gap-4">
-            <input type="text" placeholder="Name" class="bg-gray-50 border border-gray-100 rounded-2xl p-5" required>
-            <input type="text" placeholder="Location (e.g. Dubai, UAE)" class="bg-gray-50 border border-gray-100 rounded-2xl p-5" required>
+            <input type="text" name="name" placeholder="Name" class="bg-gray-50 border border-gray-100 rounded-2xl p-5" required>
+            <input type="text" name="location" placeholder="Location (e.g. Dubai, UAE)" class="bg-gray-50 border border-gray-100 rounded-2xl p-5" required>
           </div>
-          <button class="w-full py-5 bg-primary text-white rounded-2xl font-bold tracking-widest uppercase hover:opacity-90 transition-all">Submit Global Review</button>
+          <button type="submit" class="w-full py-5 bg-primary text-white rounded-2xl font-bold tracking-widest uppercase hover:opacity-90 transition-all">Submit Global Review</button>
         </form>
       </div>
     `;
     document.body.appendChild(modal);
+    // Re-bind events to catch the new form
+    this.bindEvents();
   }
 
   async submitReview(productId, form) {
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerText;
+    
+    submitBtn.innerText = "Submitting...";
+    submitBtn.disabled = true;
+
+    try {
+      const formData = new FormData(form);
       const data = {
         productId,
-        rating: form.querySelector('input[name="rating"]:checked').value,
-        text: form.querySelector('textarea').value,
-        name: form.querySelector('input[placeholder="Name"]').value,
-        location: form.querySelector('input[placeholder^="Location"]').value
+        userName: formData.get('userName'),
+        location: formData.get('location'),
+        rating: parseInt(formData.get('rating')),
+        comment: formData.get('comment'),
       };
-      
-      const close = () => form.closest('.fixed').remove();
-      
-      try {
-        const res = await fetch('/api/testimonials', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(data)
-        });
-        
-        if (res.ok) {
-          close();
-          // Optional: Show success toast
-          alert('Thank you for your review! It has been recorded.');
-        } else {
-          alert('Failed to submit review. Please try again.');
-        }
-      } catch (err) {
-        alert('Network error. Please check your connection.');
+
+      const res = await fetch('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+      });
+
+      if (res.ok) {
+        form.closest('.fixed').remove();
+        alert('Thank you! Your review has been submitted for approval.');
+      } else {
+        throw new Error('Failed to submit');
       }
+    } catch (err) {
+      console.error(err);
+      alert('Error submitting review. Please try again.');
+      submitBtn.innerText = originalText;
+      submitBtn.disabled = false;
+    }
   }
 
 }

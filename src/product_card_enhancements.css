@@ -114,17 +114,18 @@ body {
   position: absolute;
   top: 0.875rem;
   left: 0.875rem;
-  padding: 0.3rem 0.75rem;
-  border-radius: 999px;
+  padding: 0.35rem 0.85rem;
+  border-radius: 6px;
   font-size: 0.58rem;
   font-weight: 800;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  background: linear-gradient(135deg, #914d00, #c06800);
-  color: #fff;
+  letter-spacing: 0.12em;
+  background: #111;
+  color: #c5a059;
+  border: 1px solid rgba(197, 160, 89, 0.3);
   z-index: 2;
-  line-height: 1.3;
-  box-shadow: 0 2px 8px rgba(145,77,0,0.3);
+  line-height: 1;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
 }
 
 /* Discount badge on top-right */
@@ -176,6 +177,7 @@ body {
   -webkit-box-orient: vertical;
   overflow: hidden;
   margin: 0;
+  min-height: 2.7em; /* Force 2-line consistency */
 }
 
 .product-card__benefit {
@@ -213,6 +215,7 @@ body {
   padding: 0 !important;
   margin: 0 !important;
   box-shadow: none !important;
+  color: #c5a059 !important; /* Gold Stars */
   font-variation-settings: 'FILL' 1;
   vertical-align: middle;
   line-height: 1;
@@ -220,10 +223,9 @@ body {
 
 .product-card__rating-count {
   font-size: 0.7rem;
-  font-weight: 500;
-  color: #9a9590;
-  margin-left: 0.15rem;
-  /* Explicitly no background, no border, no box */
+  font-weight: 600;
+  color: #111;
+  margin-left: 0.25rem;
   background: none !important;
   border: none !important;
   padding: 0 !important;
@@ -298,26 +300,28 @@ body {
   justify-content: center;
   gap: 0.35rem;
   padding: 0.65rem 0.5rem;
-  background: linear-gradient(135deg, #f59e0b, #f28c28);
+  background: linear-gradient(135deg, #222, #000);
   color: #fff;
-  border-radius: 0.875rem;
+  border-radius: 0.6rem;
   font-size: 0.7rem;
   font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 0.07em;
   text-decoration: none;
-  border: none;
+  border: 1px solid rgba(255,255,255,0.1);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
-  min-height: 40px;
-  box-shadow: 0 2px 8px rgba(242,140,40,0.3);
+  min-height: 42px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
 }
 
 .product-card__btn-amazon:hover {
-  background: linear-gradient(135deg, #d97706, #c06800);
-  box-shadow: 0 4px 16px rgba(192,104,0,0.4);
-  transform: translateY(-1px);
+  background: #c5a059;
+  color: #111;
+  border-color: #c5a059;
+  box-shadow: 0 8px 24px rgba(197,160,89,0.3);
+  transform: translateY(-2px);
 }
 
 .product-card__btn-amazon .material-symbols-outlined {
@@ -332,23 +336,23 @@ body {
   gap: 0.35rem;
   padding: 0.65rem 0.5rem;
   background: transparent;
-  color: #914d00;
-  border-radius: 0.875rem;
+  color: #111;
+  border-radius: 0.6rem;
   font-size: 0.7rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  border: 1.5px solid rgba(145,77,0,0.25);
+  border: 1.5px solid rgba(17,17,17,0.15);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
-  min-height: 40px;
+  min-height: 42px;
 }
 
 .product-card__btn-quickview:hover {
-  background: rgba(145,77,0,0.08);
-  border-color: #914d00;
-  transform: translateY(-1px);
+  background: #f8fafc;
+  border-color: #111;
+  transform: translateY(-2px);
 }
 
 .product-card__btn-quickview .material-symbols-outlined {
